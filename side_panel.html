@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Notes</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+      background-color: #f4f4f4;
+      /* Light background for better contrast */
+    }
+
+    #dw-toolbar {
+      display: block;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 16px;
+      padding-bottom: 0;
+    }
+
+    #dw-dark-mode-toggle {
+      display: flex;
+      justify-content: end;
+      width: 100%;
+      padding-bottom: 8px;
+    }
+
+    #dw-snippet-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 8px;
+      padding-top: 8px;
+      border-top: 1px solid gray;
+      border-bottom: 1px solid gray;
+    }
+
+    #dw-current-snippet-title {
+      flex-grow: 1;
+      /* Makes the span take up remaining space */
+      text-align: center;
+      /* Optional: Center the text */
+      white-space: nowrap;
+      /* Prevent text wrapping */
+      overflow: hidden;
+      /* Hide overflowing text */
+      text-overflow: ellipsis;
+      /* Show '...' if text is too long */
+    }
+
+    .sn-dropdown {
+      position: relative;
+      display: inline-block;
+      min-width: fit-content;
+    }
+
+    .sn-dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: #ffffff;
+      min-width: 160px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      z-index: 1;
+      border-radius: 4px;
+    }
+
+    .sn-dropdown-content a {
+      color: black;
+      padding: 10px 12px;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+    }
+
+    .sn-dropdown-content a:hover {
+      background-color: #f1f1f1;
+    }
+
+    .sn-dropdown:hover .sn-dropdown-content {
+      display: block;
+    }
+
+    .sn-note {
+      border: 1px solid #ccc;
+      padding: 5px;
+      margin-bottom: 5px;
+      background-color: #ffffff;
+      border-radius: 4px;
+    }
+
+    #dw-navigation-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 10px;
+    }
+
+    .sn-divider {
+      height: 1px;
+      background-color: #ccc;
+      margin: 5px 0;
+    }
+
+    /* GitHub Style Buttons */
+    .sn-button {
+      appearance: none;
+      background-color: #FAFBFC;
+      border-radius: 6px;
+      box-shadow: rgba(27, 31, 35, 0.04) 0 1px 0, rgba(255, 255, 255, 0.25) 0 1px 0 inset;
+      box-sizing: border-box;
+      color: #24292E;
+      cursor: pointer;
+      display: inline-block;
+      font-family: -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 20px;
+      padding: 6px 16px;
+      position: relative;
+      transition: background-color 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+      user-select: none;
+      touch-action: manipulation;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    .sn-button:hover {
+      background-color: #F3F4F6;
+      text-decoration: none;
+      transition-duration: 0.1s;
+    }
+
+    .sn-button:disabled {
+      background-color: #FAFBFC;
+      border-color: rgba(27, 31, 35, 0.15);
+      color: #959DA5;
+      cursor: default;
+    }
+
+    .sn-button:active {
+      background-color: #EDEFF2;
+      box-shadow: rgba(225, 228, 232, 0.2) 0 1px 0 inset;
+      transition: none 0s;
+    }
+
+    .sn-button:focus {
+      outline: 1px transparent;
+    }
+
+    #dw-save-snippet {
+      display: contents;
+    }
+
+    #dw-remove-snippet {
+      display: contents;
+    }
+
+    .dw-note {
+      background-color: #ffffff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+      padding: 10px;
+      margin-bottom: 10px;
+      position: relative;
+      border-left: 3px solid white;
+      border-right: 3px solid white;
+    }
+
+    .dw-note:hover {
+      border-left: 3px solid #373;
+      border-right: 3px solid #373;
+    }
+
+    .dw-note-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .dw-note-filename {
+      flex-grow: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: bold;
+    }
+
+    .dw-close-icon {
+      cursor: pointer;
+      font-size: 16px;
+      color: #888;
+    }
+
+    .dw-note-subheader {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 5px;
+    }
+
+    .dw-github-icon {
+      width: 16px;
+      height: 16px;
+      background-color: #ddd;
+      border-radius: 50%;
+    }
+
+    .dw-repo-name {
+      font-size: 12px;
+      color: #555;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dw-note-text {
+      margin-top: 10px;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .sn-recent-snippet {
+      display: flex;
+      align-items: center;
+    }
+
+    .sn-note-active {
+      border-left: 3px solid #373F51;
+      border-right: 3px solid #373F51;
+    }
+
+    /* Note Edit - view part */
+    .dw-note-edit {
+      position: absolute;
+      right: 0px;
+      bottom: 0px;
+      display: none;
+      background-color: white;
+    }
+
+    .dw-note:hover .dw-note-edit {
+      display: block;
+    }
+
+    .dw-note-wrapper {
+      position: relative;
+    }
+
+    .dw-note-icons {
+      display: none;
+      gap: 8px;
+    }
+
+    .dw-note.editing .dw-note-edit {
+      display: none;
+    }
+
+    .dw-note textarea {
+      resize: vertical;
+    }
+
+    .dw-note.editing .dw-note-icons {
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: #373F51;
+      display: flex;
+      padding-left: 4px;
+      padding-right: 4px;
+      border-radius: 4px 4px 0px 0px;
+    }
+
+    .dw-note-icons svg {
+      width: 18px;
+    }
+
+    .dw-note-text {
+      white-space: pre-wrap;
+    }
+
+    /* Hide textarea initially */
+    .dw-note-textarea {
+      width: 100%;
+      height: 100px;
+      display: none;
+    }
+
+    .dw-note.editing .dw-note-text {
+      display: none;
+    }
+
+    /* Note's collapse - expand part */
+    .dw-note-text {
+      display: block;
+      overflow: visible;
+    }
+
+    .dw-note.collapsed .dw-note-text {
+      display: block;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      -webkit-line-clamp: 2;
+      /* Limit text to 2 lines */
+      -webkit-box-orient: vertical;
+      display: -webkit-box;
+      line-height: 1.5em;
+      /* Adjust line height to your preference */
+      max-height: 3em;
+      /* 2 lines * line-height */
+    }
+
+    .dw-note.dw-note.editing .dw-note-collapse {
+      display: none;
+    }
+
+    .dw-note-collapse svg {
+      width: 16px;
+      height: 16px;
+      padding-right: 10px;
+    }
+
+    #dw-snippet-list {
+      height: calc(100vh - 250px);
+      display:none;
+      text-align: center;
+      align-items: center;
+      justify-content: center;
+    }
+    #dw-note-list {
+      max-height: calc(100vh - 250px);
+      overflow-y: scroll;
+      padding-right: 16px;
+    }
+    .sn-snippet-mode #dw-snippet-controls {
+      display: none;
+    }
+
+    .sn-snippet-mode #dw-snippet-list {
+      display: flex;
+    }
+
+    .sn-snippet-mode #dw-note-list {
+      display: none;
+    }
+
+    #dw-snippet-list-wrapper {
+      background-color: #FAFBFC;
+      padding: 32px;
+      border-radius: 16px;
+    }
+  </style>
+
+</head>
+
+<body>
+  <div id="dw-main-container" class="sn-snippet-mode">
+    <div id="dw-toolbar">
+      <div id="dw-top-level-toolbar">
+        <!-- Snippets File-like menu -->
+        <div class="sn-dropdown">
+          <button class="sn-button">Snippets ▼</button>
+          <div class="sn-dropdown-content">
+            <a href="#" id="dw-new-snippet" class="sn-button">New</a>
+            <div class="sn-divider"></div>
+            <a href="#" class="sn-recent-snippet sn-button">Snippet 1</a>
+            <a href="#" class="sn-recent-snippet sn-button">Snippet 2</a>
+          </div>
+        </div>
+        <!-- Dark Mode Toggle -->
+        <div id="dw-dark-mode-toggle">
+          <span>Dark Mode</span>
+          <input type="checkbox" id="dw-dark-toggle">
+        </div>
+      </div>
+      <div class="sn-divider"></div>
+
+      <!-- Snippet Controls -->
+      <div id="dw-snippet-controls">
+        <span id="dw-current-snippet-title">Snippet title</span>
+        <button id="dw-save-snippet" title="Go to save page" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg"
+            height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+            <path
+              d="M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h480q33 0 56.5 23.5T800-800v640q0 33-23.5 56.5T720-80H240Zm0-80h480v-640h-80v280l-100-60-100 60v-280H240v640Zm0 0v-640 640Zm200-360 100-60 100 60-100-60-100 60Z" />
+          </svg></button>
+        <button id="dw-remove-snippet" title="Remove local changes" class="sn-button"><svg
+            xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+            <path
+              d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div id="dw-note-list"></div>
+
+    <div id="dw-snippet-list">
+      <div id="dw-snippet-list-wrapper" class="sn-wrap-div">
+        <button id="dw-new-snippet-list" class="sn-button">New</button>
+        <div class="sn-recent-snippet">Snippet A</div>
+        <div class="sn-recent-snippet">Snippet B</div>
+      </div>
+    </div>
+    <div class="sn-divider"></div>
+    <!-- Navigation Buttons -->
+    <div id="dw-navigation-buttons">
+      <button id="dw-notes-prev" class="sn-button">Prev</button>
+      <button id="dw-notes-next" class="sn-button">Next</button>
+    </div>
+  </div>
+
+  <script src="side_panel.js"></script>
+</body>
+
+</html>

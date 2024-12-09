@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "GitHub Note Extension with Side Panel",
+  "version": "1.0",
+  "description": "Adds note-taking functionality on GitHub with a side panel.",
+  "permissions": ["scripting", "tabs", "activeTab", "storage", "sidePanel"],
+  "host_permissions": ["https://github.com/*", "http://localhost:4200/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "side_panel": {
+    "default_path": "side_panel.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "GitHub Notes"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["content.js"]
+    },
+    {
+      "matches": ["http://localhost:4200/*", "https://snipettor.firebaseapp.com/*"],
+      "js": ["content_snippetor.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
