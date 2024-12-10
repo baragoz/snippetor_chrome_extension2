@@ -55,7 +55,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         updatedNotes.splice(newActiveNote, 0, message.note);
 
 
-        const isLastNote = newActiveNote >= (updatedNotes.length - 1);
+      const isLastNote = newActiveNote >= (updatedNotes.length - 1);
 
       console.log("DEBUG UPDATE NOTEs");
         // Note: please, do not join these 2 updates
@@ -63,7 +63,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           console.log("DEBUG UPDATE NOTEs DONE");
           chrome.storage.sync.set({ [activeNoteUid]: newActiveNote}, () => {
             console.log("DEBUG UPDATE ACTIVE NOTE DONE");
-            sendResponse({ success: true,  noteId: message.note.id, snippetId: activeSnippetId});
+            sendResponse({
+              success: true,
+              noteId: message.note.id,
+              snippetId: activeSnippetId,
+              hasNext: !isLastNote, // not the last note in a list
+              hasPrev: updatedNotes.length > 1  // has more than 1 note in a list
+            });
             console.log("DEBUG NOTIFY");
 
             if (newActiveNote > 0 && isLastNote && oldActiveNote >= 0) {
@@ -76,7 +82,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sid: activeSnippetId,
                 text: oldNote.text,
                 url: oldNote.url,
-                hasNext: true, // not the last note in a list
+                hasNext: true, // prev note now is not the last note in a list
                 hasPrev: oldActiveNote > 0  // not the first element
               }, false);  
             }
@@ -140,7 +146,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           nid: notes[noteIndex].id,
           sid: snippetId,
           text: notes[noteIndex].text,
-          url: notes[noteIndex].url
+          url: notes[noteIndex].url,
+          hasNext: noteIndex < (notes.length - 1),
+          hasPrev: noteIndex > 0,
         });
       });
     });
@@ -182,7 +190,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 
       chrome.storage.sync.set({ [notesUid]: notes, [activeUid]: newActiveId }, () => {
-          sendResponse({ success: true }); 
+        //
+        // Note removed, now return result and then update all affected tabs
+        //
+        sendResponse({ success: true }); 
         //
         // Notify all tabs with given URL
         //
@@ -195,7 +206,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // 1. we still have some notes
         // 2. check if we removed first or last index
-        if (notes.length > 0  && rmIndex > 0 && (rmIndex == 0 || rmIndex == notes.length - 2)) {
+        //    if so, notify subling note that it need to update hasNext/hasPrev
+        if (notes.length > 0  && rmIndex >= 0 && (rmIndex == 0 || rmIndex == notes.length)) {
           const updateIndex = (rmIndex == 0) ? 0 : notes.length -1;
           const updateNote = notes[updateIndex];
           //
@@ -206,8 +218,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             sid: snippetId,
             text: updateNote.text,
             url: updateNote.url,
-            hasNext: (rmIndex < notes.length - 1), // not the last note in a list
-            hasPrev: rmIndex > 0  // not the first element
+            hasNext: (updateIndex < notes.length - 1), // update note is not the last note in a list
+            hasPrev: updateIndex > 0  // and not the first element in the list
           }, false);  
         }
 
@@ -507,15 +519,14 @@ function notifyTabsNoteChange(action, data, excludeCurrentTab = false) {
             if (tab.url) {
                 const sanitizedTabUrl = sanitizeUrl(tab.url);
                 if (sanitizedUrl.includes(sanitizedTabUrl)) {
-
                     chrome.tabs.sendMessage(tab.id, {
-                        action: action, // onNoteUpdate, onNoteRemove
-                        nid: data.nid,
-                        sid: data.sid,
-                        text: data.text,
-                        url: data.url,
-                        hasNext: data.hasNext,
-                        hasPrev: data.hasPrev
+                      action: action, // onNoteUpdate, onNoteRemove
+                      nid: data.nid,
+                      sid: data.sid,
+                      text: data.text,
+                      url: data.url,
+                      hasNext: data.hasNext,
+                      hasPrev: data.hasPrev
                     });
                 }
             }

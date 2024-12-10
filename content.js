@@ -128,6 +128,15 @@ class SnippetorContainer {
     });
     previousButton.addEventListener("click", () => this.onPrevious());
     nextButton.addEventListener("click", () => this.onNext());
+
+    this.updateNextPrev(inputContainer);
+  }
+
+  updateNextPrev(inputContainer) {
+    const previousButton = inputContainer.querySelector(".snippetor-previous-button");
+    const nextButton = inputContainer.querySelector(".snippetor-next-button");
+    nextButton.disabled =  !this.note.hasNext;
+    previousButton.disabled = !this.note.hasPrev;
   }
 
   // Method to render edit container
@@ -144,6 +153,7 @@ class SnippetorContainer {
 
     // Define the HTML template for edit mode
     inputContainer.innerHTML = `
+        <div class="sn-corner"></div>
         <div class="snippetor-close-button-wrapper">
             <div role="group" aria-label="repo link" class="sn-btn-group">
               <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
@@ -234,7 +244,9 @@ class SnippetorContainer {
         this.note.text = text.trim(); // Update the text data
         console.log("ASSIGN ID : " + response.noteId);
         this.note.id = response.noteId;
-        this.note.sid = response.snippetId,
+        this.note.sid = response.snippetId;
+        this.note.hasNext = response.hasNext;
+        this.note.hasPrev = response.hasPrev;
         this.state = "view";
         this.renderPreviewContainer();
       } else {
@@ -304,7 +316,9 @@ class SnippetorManager {
           id: message.nid,
           text: message.text,
           url: message.url,
-          sid: message.sid
+          sid: message.sid,
+          hasNext: message.hasNext,
+          hasPrev: message.hasPrev
         }, message.sid);
       } else if (message.action === "onNoteSelect") {
         //
@@ -318,9 +332,15 @@ class SnippetorManager {
         console.log("Update current note", message);
         this.createdNotes.forEach((wnote) => {
           if (wnote.note.id == message.nid) {
-            wnote.note.text = message.text;
+            if (message.text != undefined)
+              wnote.note.text = message.text;
             // TODO: handle line change. (move snippet to a new line)
-            wnote.note.url = message.url;
+            if (message.url != undefined)
+              wnote.note.url = message.url;
+            if (message.hasNext != undefined)
+              wnote.note.hasNext = message.hasNext;
+            if (message.hasPrev != undefined)
+              wnote.note.hasPrev = message.hasPrev;
             wnote.redraw();
           }
         });
@@ -560,6 +580,12 @@ class SnippetorManager {
   .sn-max-space {
     flex-grow: 1;
   }
+    .sn-corner {
+      border-top:  5px solid green;
+      border-left: 5px solid transparent;
+      width: 0px;
+      height: 0px;
+    }
 
     `;
 
@@ -574,7 +600,7 @@ class SnippetorManager {
     if (!lineNumber.snippetorInstance) {
       this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "view", isActiveNote));
     } else {
-      lineNumber.snippetorInstance.displayContainer();
+      lineNumber.snippetorInstance.displayContainer(isActiveNote);
     }
   }
 
@@ -586,7 +612,7 @@ class SnippetorManager {
     if (!lineNumber.snippetorInstance) {
       this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "edit", true));
     } else {
-      lineNumber.snippetorInstance.displayContainer();
+      lineNumber.snippetorInstance.displayContainer(true);
     }
   }
 
