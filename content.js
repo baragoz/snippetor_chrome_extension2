@@ -58,8 +58,13 @@ class SnippetorContainer {
     this.lineNumbers = null;
   }
 
-  displayContainer() {
-    console.log("display container");
+  displayContainer(isVisible) {
+    // we could hide/show the view containers only
+    // edit-state containers should be visible unless user change
+    // url or press cancel button
+    if (this.lineNumber && this.lineNumber.inputContainer && this.state == "view") {
+      this.lineNumber.inputContainer.style.display = isVisible ? "flex" : "none";
+    }
   }
   
 
@@ -301,8 +306,15 @@ class SnippetorManager {
           url: message.url,
           sid: message.sid
         }, message.sid);
-      }
-      if (message.action === "onNoteUpdate") {
+      } else if (message.action === "onNoteSelect") {
+        //
+        // Work-around when notes are in the same file
+        //
+        this.createdNotes.forEach((wnote) => {
+          // hide all except current
+          wnote.displayContainer(wnote.note.id == message.nid);
+        });
+      } else if (message.action === "onNoteUpdate") {
         console.log("Update current note", message);
         this.createdNotes.forEach((wnote) => {
           if (wnote.note.id == message.nid) {

@@ -394,12 +394,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // sendResponse({ success: true });
 
       const url = workingNote.url;
+      const sanitizedUrl = this.sanitizeUrl(url);
       // load next note in the current tab
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
             // Update the current active tab with the new URL
             sendResponse({ success: true, message: "Tab update request send" });
 
+            //
+            // Work-around for navigate the same url except hash
+            //
+            const tabUrl = this.sanitizeUrl(tabs[0].url);
+            if (sanitizedUrl === tabUrl) {
+              // Notify current tab about active change
+              chrome.tabs.sendMessage(tabs[0].id, {
+                action: "onNoteSelect",
+                nid: workingNote.id,
+                sid: message.snippetId,
+              });
+            }
             // Reloading current tab, need to send response first
             chrome.tabs.update(tabs[0].id, { url: url }, () => {
                 console.log(`Tab updated to URL: ${url}`);
@@ -411,20 +424,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         }
       });
     });
-  
     return true;
   }
 
   if (message.action === "SnBackground.openNoteInCurrentTab") {
     const url = message.url; // Extract the URL from the message
     if (url) {
+        const sanitizedUrl = this.sanitizeUrl(url);
         // Query the active tab in the current window
         chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             if (tabs.length > 0) {
+
+                const tabURL = this.sanitizeUrl(tabs[0].url);
+
+                console.log("TAB URL IS", [tabURL, sanitizedUrl]);
+                //
+                //  Use-case  when we switch between the same url
+                //  URL#L20  -> URL#L60
+                //
+                if (sanitizedUrl == tabURL) {
+                  // Notify current tab about active change
+                  chrome.tabs.sendMessage(tabs[0].id, {
+                    action: "onNoteSelect",
+                    nid: message.noteId,
+                    sid: message.snippetId,
+                  });
+                }
+
                 // Update the current active tab with the new URL
                 chrome.tabs.update(tabs[0].id, { url: url }, () => {
+                  
                     console.log(`Tab updated to URL: ${url}`);
+
+                    // Send RESPONSE TO THE SIDE PANEL 
                     sendResponse({ status: "success", message: "Tab updated successfully" });
+
                 });
             } else {
                 console.error("No active tab found");

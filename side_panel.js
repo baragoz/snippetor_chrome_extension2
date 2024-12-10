@@ -171,8 +171,10 @@ class SnippetManager {
     notes.forEach((note, noteIndex) => {
         const noteElement = document.createElement("div");
         noteElement.className = "dw-note collapsed";
+        // TODO: re-work this code
         noteElement.setAttribute("sn-note-url", note.url);
         noteElement.setAttribute("sn-note-text", note.text);
+        noteElement.setAttribute("sn-note-id", note.id);
         noteElement.innerHTML = `
             <div class="dw-note-header">
                 <div class="dw-note-filename" title="${note.url}">${this.getFileName(note.url)}</div>
@@ -371,8 +373,15 @@ updateNoteText(note, text) {
           chrome.storage.sync.set({ [`active_note_${this.currentSnippetId}`]: noteIndex });
           const snData = note.getAttribute("sn-note-url");
           const snText = note.getAttribute("sn-note-text");
+          const snId =  parseInt(note.getAttribute("sn-note-id"), 10);
           if (snData) {
-              chrome.runtime.sendMessage({ action: "SnBackground.openNoteInCurrentTab", url: snData, text: snText, noteIndex }, (response) => {
+              chrome.runtime.sendMessage({
+                action: "SnBackground.openNoteInCurrentTab",
+                url: snData,
+                text: snText,
+                noteId: snId,
+                snippetId: this.currentSnippetId,
+                noteIndex }, (response) => {
                   if (response) console.log(response.message);
               });
           }
