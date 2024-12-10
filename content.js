@@ -58,6 +58,13 @@ class SnippetorContainer {
     this.lineNumbers = null;
   }
 
+  isVisible() { 
+    if (!this.lineNumber || !this.lineNumber.inputContainer)
+      return false;
+    return this.lineNumber.inputContainer.style.display != "none";
+
+  }
+
   displayContainer(isVisible) {
     // we could hide/show the view containers only
     // edit-state containers should be visible unless user change
@@ -91,6 +98,7 @@ class SnippetorContainer {
 
     // Define the HTML template for preview mode
     inputContainer.innerHTML = `
+        <div class="sn-corner"></div>
         <div class="snippetor-close-button-wrapper">
             <div role="group" aria-label="repo link" class="sn-btn-group">
               <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
@@ -249,6 +257,7 @@ class SnippetorContainer {
         this.note.hasPrev = response.hasPrev;
         this.state = "view";
         this.renderPreviewContainer();
+        this.displayContainer(true);
       } else {
         // Show failed message
         const td = "Failed to save the note:" + response.error;
@@ -341,7 +350,7 @@ class SnippetorManager {
               wnote.note.hasNext = message.hasNext;
             if (message.hasPrev != undefined)
               wnote.note.hasPrev = message.hasPrev;
-            wnote.redraw();
+            wnote.redraw(wnote.isVisible());
           }
         });
       } else if (message.action === "onNoteRemove") {
@@ -416,6 +425,11 @@ class SnippetorManager {
             lineNumber.snippetorInstance.onRestore();
             return;
           }
+          //
+          // minimize all containers which are in the view mode
+          // to make it easier to show edit container
+          // Note: this method does not hide save notes which are in edit mode
+          this.hideAllViewContainers();
           // There is no container attached. Make a new one.
           this.showEditContainer({ id: -1, text: "" }, lineNumber, lineNumbers);
         });
@@ -439,6 +453,7 @@ class SnippetorManager {
         background-color: #373F51;
         border: 1px solid #ccc;
         border-radius: 8px;
+        border-top-left-radius: 0px;
         padding: 10px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         display: flex;
@@ -581,8 +596,11 @@ class SnippetorManager {
     flex-grow: 1;
   }
     .sn-corner {
-      border-top:  5px solid green;
-      border-left: 5px solid transparent;
+      position: absolute;
+      left: -25px;
+      top: 0px;
+      border-top:  25px solid #373F51;
+      border-left: 25px solid transparent;
       width: 0px;
       height: 0px;
     }
@@ -602,6 +620,14 @@ class SnippetorManager {
     } else {
       lineNumber.snippetorInstance.displayContainer(isActiveNote);
     }
+  
+  }
+
+  hideAllViewContainers() {
+    this.createdNotes.forEach((wnote) => {
+      // hide all except current
+      wnote.displayContainer(false);
+    });
   }
 
   showEditContainer(note, lineNumber, lineNumbers) {
