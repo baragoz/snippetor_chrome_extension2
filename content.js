@@ -7,12 +7,13 @@ let strings = {
 };
 
 class SnippetorContainer {
-  constructor(note, lineNumber, lineNumbers, state, isActiveNote) {
+  constructor(note, lineNumber, lineNumbers, state, isActiveNote, onLineChangeCallback) {
     this.note = note; // Contains note.id and note.text
     this.lineNumber = lineNumber;
     this.lineNumbers = lineNumbers;
     this.state = state; // Can be "view" or "edit"
     this.circle = null; // Reference to the circle element
+    this.onLineChangeCallback = onLineChangeCallback;
 
     // Attach the instance to the lineNumber element
     this.lineNumber.snippetorInstance = this;
@@ -74,7 +75,6 @@ class SnippetorContainer {
     }
   }
   
-
   // Method to remove any existing container
   removeExistingContainer() {
     if (this.lineNumber.inputContainer) {
@@ -82,6 +82,12 @@ class SnippetorContainer {
       this.lineNumber.inputContainer = null;
       // this.lineNumber.snippetorInstance = null;
     }
+  }
+
+  forceLineUpdate() {
+    const errorArea = this.lineNumber.inputContainer.querySelector(".snippetor-error-message");
+    // Force to send line position change
+    this.onSave(errorArea, this.note.text, true);
   }
 
   // Method to render preview container
@@ -127,6 +133,7 @@ class SnippetorContainer {
     const editButton = inputContainer.querySelector(".snippetor-edit-button");
     const previousButton = inputContainer.querySelector(".snippetor-previous-button");
     const nextButton = inputContainer.querySelector(".snippetor-next-button");
+    const moveButton = inputContainer.querySelector(".snippetor-move-button");
 
     // Event Listeners for preview mode
     closeButton.addEventListener("click", () => this.onMinimize(inputContainer));
@@ -136,8 +143,24 @@ class SnippetorContainer {
     });
     previousButton.addEventListener("click", () => this.onPrevious());
     nextButton.addEventListener("click", () => this.onNext());
+    moveButton.addEventListener("click", () => {
+      const isActive = moveButton.classList.contains("sn-move-active");
+      if (isActive) {
+        moveButton.classList.remove("sn-move-active");
+      } else {
+        moveButton.classList.add("sn-move-active");
+      }
+      //
+      // Disable active if needed
+      this.onLineMove(isActive ? null: this);
+    });
 
     this.updateNextPrev(inputContainer);
+  }
+
+  onLineMove(data) {
+    if (this.onLineChangeCallback)
+      this.onLineChangeCallback(data);
   }
 
   updateNextPrev(inputContainer) {
@@ -304,6 +327,7 @@ class SnippetorManager {
     this.currentHash = "";
     this.skipTwice = 2;
     this.isCssAttached = false;
+    this.lineChangeNote = null;
 
     //
     // TODO: Clean up created notes, on remove, and on cancel note creation!!!
@@ -423,6 +447,18 @@ class SnippetorManager {
           if (lineNumber.snippetorInstance) {
             // Show note again
             lineNumber.snippetorInstance.onRestore();
+            return;
+          }
+
+          if (this.lineChangeNote != null) {
+            this.showPreviewContainer(this.lineChangeNote.note, lineNumber, lineNumbers, true);
+            this.lineChangeNote.remove();
+            this.lineChangeNote = null;
+            
+            // force line update message to the backend
+            if (lineNumber.snippetorInstance) {
+              lineNumber.snippetorInstance.forceLineUpdate();
+            }
             return;
           }
           //
@@ -616,7 +652,9 @@ class SnippetorManager {
 
   showPreviewContainer(note, lineNumber, lineNumbers, isActiveNote = false) {
     if (!lineNumber.snippetorInstance) {
-      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "view", isActiveNote));
+      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "view", isActiveNote, (data) => {
+        this.lineChangeNote = data;
+      }));
     } else {
       lineNumber.snippetorInstance.displayContainer(isActiveNote);
     }
@@ -636,7 +674,9 @@ class SnippetorManager {
     note.blob = blob.currentOid;
     console.log("HAS Blob:", blob);
     if (!lineNumber.snippetorInstance) {
-      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "edit", true));
+      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "edit", true, (data) => {
+        this.lineChangeNote = data;
+      }));
     } else {
       lineNumber.snippetorInstance.displayContainer(true);
     }

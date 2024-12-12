@@ -16,6 +16,7 @@ chrome.runtime.onInstalled.addListener(() => {
   // TODO: later - make a mapping for tabid <-> active snippet id
   //
   chrome.storage.sync.get({ snippets: [], active_snippet: -1, version: "1.0" }, (data) => {
+    activeSnippet = data.active_snippet;
     // Note: at this point we can add a snippet data migration on version update 
     chrome.storage.sync.set({ snippets: data.snippets, active_snippet: data.active_snippet, version: "1.0" }, () => {
       console.log("Notes storage initialized.");
