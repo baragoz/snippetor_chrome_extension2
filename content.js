@@ -6,8 +6,11 @@ let strings = {
   moveIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefef8"><path d="M320-160q-117 0-198.5-81.5T40-440q0-107 70.5-186.5T287-718l-63-66 56-56 160 160-160 160-56-57 59-59q-71 14-117 69t-46 127q0 83 58.5 141.5T320-240h120v80H320Zm200-360v-280h360v280H520Zm0 360v-280h360v280H520Zm80-80h200v-120H600v120Z"/></svg>',
 };
 
+
+
 class SnippetorContainer {
-  constructor(note, lineNumber, lineNumbers, state, isActiveNote, onLineChangeCallback) {
+  constructor(parser, note, lineNumber, lineNumbers, state, isActiveNote, onLineChangeCallback) {
+    this.parser = parser;
     this.note = note; // Contains note.id and note.text
     this.lineNumber = lineNumber;
     this.lineNumbers = lineNumbers;
@@ -16,10 +19,7 @@ class SnippetorContainer {
     this.onLineChangeCallback = onLineChangeCallback;
 
     // Attach the instance to the lineNumber element
-    this.lineNumber.snippetorInstance = this;
-
-    // Render initial state based on the provided state argument
-    this.redraw(isActiveNote);
+    this.lineNumber.snippetorNote = this;
 
     // Create a circle element to represent the minimized note
     this.circle = document.createElement("div");
@@ -27,461 +27,27 @@ class SnippetorContainer {
     this.lineNumber.appendChild(this.circle);
     
     // Add event listener to the circle to restore the container
-    this.circle.addEventListener("click", () => this.onRestore());
+    this.circle.addEventListener("click", (e) => {
+      this.onRestore();
+      e.preventDefault();
+      return true;
+    });
+
+    // Append note to circle element in a shadow DOM
+    this.shadow = this.circle.attachShadow({ mode: 'open' });
+
+    this.shadow.addEventListener('click', (event) => {
+      event.stopPropagation(); // Prevent propagation outside the Shadow DOM
+      event.preventDefault();
+    });
+    // Attach custom style to shadow dom
+    this.shadow.appendChild(this.getCssElement());
+
+    // Render initial state based on the provided state argument
+    this.redraw(isActiveNote);
    }
 
-  redraw(isActiveNote = false) {
-    if (this.state === "view") {
-      this.renderPreviewContainer(isActiveNote);
-    } else {
-      this.renderEditContainer();
-    }
-  }
-
-  remove() {
-    // Remove circle
-    if (this.circle) {
-      this.circle.remove();
-      this.circle = null;
-    }
-    
-    // Remove input container
-    if (this.lineNumber.inputContainer) {
-      this.lineNumber.inputContainer.remove();
-      this.lineNumber.inputContainer = null;
-    }
-
-    // remove reference on this
-    this.lineNumber.snippetorInstance = null;
-
-    // renmove lines
-    this.lineNumber = null;
-    this.lineNumbers = null;
-  }
-
-  isVisible() { 
-    if (!this.lineNumber || !this.lineNumber.inputContainer)
-      return false;
-    return this.lineNumber.inputContainer.style.display != "none";
-
-  }
-
-  displayContainer(isVisible) {
-    // we could hide/show the view containers only
-    // edit-state containers should be visible unless user change
-    // url or press cancel button
-    if (this.lineNumber && this.lineNumber.inputContainer && this.state == "view") {
-      this.lineNumber.inputContainer.style.display = isVisible ? "flex" : "none";
-    }
-  }
-  
-  // Method to remove any existing container
-  removeExistingContainer() {
-    if (this.lineNumber.inputContainer) {
-      this.lineNumber.inputContainer.remove();
-      this.lineNumber.inputContainer = null;
-      // this.lineNumber.snippetorInstance = null;
-    }
-  }
-
-  forceLineUpdate() {
-    const errorArea = this.lineNumber.inputContainer.querySelector(".snippetor-error-message");
-    // Force to send line position change
-    this.onSave(errorArea, this.note.text, true);
-  }
-
-  // Method to render preview container
-  renderPreviewContainer(isActiveNote) {
-    this.removeExistingContainer();
-
-    // Create the container element
-    const inputContainer = document.createElement("div");
-    inputContainer.className = "snippetor-sn-note-input";
-
-    // Adjust position based on line index
-    const rect = this.lineNumber.getBoundingClientRect();
-    inputContainer.style.left = "45px";
-
-    // Define the HTML template for preview mode
-    inputContainer.innerHTML = `
-        <div class="sn-corner"></div>
-        <div class="snippetor-close-button-wrapper">
-            <div role="group" aria-label="repo link" class="sn-btn-group">
-              <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
-              <button type="button" title="Default branch" class="sn-btn">${this.note.defaultBranch}</button>
-            </div>
-            <div class="sn-max-space"></div>
-            <span class="snippetor-move-button" title="Move to another line">${strings.moveIcon}</span>
-            <span class="snippetor-edit-button" title="Edit text">${strings.editIcon}</span>
-            <span class="snippetor-minimize-button" title="Minimize">${strings.minimizeIcon}</span>
-        </div>
-        <div class="snippetor-note-textarea-wrapper">
-            <textarea class="snippetor-note-textarea" readonly>${this.note.text}</textarea>
-        </div>
-        <div class="snippetor-button-container">
-            <button class="snippetor-button snippetor-previous-button">Prev</button>
-            <button class="snippetor-button snippetor-next-button">Next</button>
-        </div>
-    `;
-    inputContainer.style.display = isActiveNote ? "flex" : "none"; 
-    // Append the inputContainer to the lineNumber
-    this.lineNumber.appendChild(inputContainer);
-    this.lineNumber.inputContainer = inputContainer;
-
-    // Query the buttons and other elements
-    const closeButton = inputContainer.querySelector(".snippetor-minimize-button");
-    const editButton = inputContainer.querySelector(".snippetor-edit-button");
-    const previousButton = inputContainer.querySelector(".snippetor-previous-button");
-    const nextButton = inputContainer.querySelector(".snippetor-next-button");
-    const moveButton = inputContainer.querySelector(".snippetor-move-button");
-
-    // Event Listeners for preview mode
-    closeButton.addEventListener("click", () => this.onMinimize(inputContainer));
-    editButton.addEventListener("click", () => {
-      this.state = "edit";
-      this.renderEditContainer();
-    });
-    previousButton.addEventListener("click", () => this.onPrevious());
-    nextButton.addEventListener("click", () => this.onNext());
-    moveButton.addEventListener("click", () => {
-      const isActive = moveButton.classList.contains("sn-move-active");
-      if (isActive) {
-        moveButton.classList.remove("sn-move-active");
-      } else {
-        moveButton.classList.add("sn-move-active");
-      }
-      //
-      // Disable active if needed
-      this.onLineMove(isActive ? null: this);
-    });
-
-    this.updateNextPrev(inputContainer);
-  }
-
-  onLineMove(data) {
-    if (this.onLineChangeCallback)
-      this.onLineChangeCallback(data);
-  }
-
-  updateNextPrev(inputContainer) {
-    const previousButton = inputContainer.querySelector(".snippetor-previous-button");
-    const nextButton = inputContainer.querySelector(".snippetor-next-button");
-    nextButton.disabled =  !this.note.hasNext;
-    previousButton.disabled = !this.note.hasPrev;
-  }
-
-  // Method to render edit container
-  renderEditContainer() {
-    this.removeExistingContainer();
-
-    // Create the container element
-    const inputContainer = document.createElement("div");
-    inputContainer.className = "snippetor-sn-note-input";
-
-    // Adjust position based on line index
-    const rect = this.lineNumber.getBoundingClientRect();
-    inputContainer.style.left = "45px";
-
-    // Define the HTML template for edit mode
-    inputContainer.innerHTML = `
-        <div class="sn-corner"></div>
-        <div class="snippetor-close-button-wrapper">
-            <div role="group" aria-label="repo link" class="sn-btn-group">
-              <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
-              <button type="button" title="Default branch" class="sn-btn">${this.note.defaultBranch}</button>
-            </div>
-            <div class="sn-max-space"></div>
-            <span class="snippetor-close-button">${strings.closeIcon}</span>
-        </div>
-        <textarea class="snippetor-note-textarea">${this.note.text}</textarea>
-        <p class="snippetor-error-message"></p>
-        <div class="snippetor-button-container">
-            <button class="snippetor-button snippetor-cancel-button">Cancel</button>
-            <button class="snippetor-button snippetor-done-button">Save</button>
-            <button class="snippetor-button snippetor-update-button">Update</button>
-        </div>
-    `;
-
-    // Append the inputContainer to the lineNumber
-    this.lineNumber.appendChild(inputContainer);
-    this.lineNumber.inputContainer = inputContainer;
-    if (this.note.id <= 0)
-      this.lineNumber.inputContainer.classList.add("snippetor-create");
-
-    // Query the buttons and other elements
-    const closeButton = inputContainer.querySelector(".snippetor-close-button");
-    const cancelButton = inputContainer.querySelector(".snippetor-cancel-button");
-    const doneButton = inputContainer.querySelector(".snippetor-done-button");
-    const updateButton = inputContainer.querySelector(".snippetor-update-button");
-    const textArea = inputContainer.querySelector(".snippetor-note-textarea");
-    const errorArea = inputContainer.querySelector(".snippetor-error-message");
-
-    // Event Listeners for edit mode
-    cancelButton.addEventListener("click", () => this.onCancel(inputContainer));
-    closeButton.addEventListener("click", () => this.onClose(inputContainer));
-    doneButton.addEventListener("click", () => this.onSave(errorArea, textArea.value, false));
-    updateButton.addEventListener("click", () => this.onSave(errorArea, textArea.value, true));
-  }
-
-  // Callback: Minimize the container and show a circle
-  onMinimize(inputContainer) {
-    inputContainer.style.display = "none"; // Hide the container
-  }
-
-  // Callback: Restore the container from the minimized state
-  onRestore() {
-    if (this.lineNumber.inputContainer) {
-      this.lineNumber.inputContainer.style.display = "flex";
-    }
-  }
-
-  // Callback: Close the container
-  onClose(inputContainer) {
-    // remove element if it is create mode
-    if (this.note.id <= 0) {
-      inputContainer.remove();
-      this.lineNumber.snippetorInstance = null; // Remove reference to the instance
-    }
-    else {
-      // and cancel change if it is edit mode
-      this.onCancel(inputContainer);
-    }
-  }
-
-  // Callback: Cancel the edit operation
-  onCancel(inputContainer) {
-    this.state = "view";
-    this.renderPreviewContainer();
-  }
-
-  // Callback: Save the note and switch to preview mode
-  onSave(errorArea, text, isUpdate) {
-    const note = {
-      id: this.note.id,
-      sid: this.note.sid || -1,
-      url: window.location.href,
-      text: text.trim(),
-      defaultBranch: this.note.defaultBranch,
-      blob: this.note.blob
-    };
-
-    // Send a message to the background script to save the note
-    chrome.runtime.sendMessage({
-      action: isUpdate ? "SnBackground.updateNote" : "SnBackground.saveNote",
-      note, snippetId: note.sid, isContentScript: true }, (response) => {
-      if (response?.success) {
-        console.log("Note saved successfully!");
-        // After saving, switch back to preview mode
-        this.note.text = text.trim(); // Update the text data
-        console.log("ASSIGN ID : " + response.noteId);
-        this.note.id = response.noteId;
-        this.note.sid = response.snippetId;
-        this.note.hasNext = response.hasNext;
-        this.note.hasPrev = response.hasPrev;
-        this.state = "view";
-        this.renderPreviewContainer();
-        this.displayContainer(true);
-      } else {
-        // Show failed message
-        const td = "Failed to save the note:" + response.error;
-        errorArea.innerHTML = strings.reportIcon + td;
-      }
-    });
-  }
-
-  // Callback: Navigate to the previous note or line (logic to be implemented)
-  onPrevious() {
-    if (this.note.hasPrev) {
-      chrome.runtime.sendMessage(
-        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: true, goNext: false, note: this.note, snippetId: this.note.sid },
-        (response) => {
-          console.log("RESULT FOR PREV NAVIGATION:", response);
-          // this.showDefaultNotes(response.notes, url, response.active_note);
-        }
-      );
-      
-    }
-    console.log("Previous button clicked");
-  }
-
-  // Callback: Navigate to the next note or line (logic to be implemented)
-  onNext() {
-    console.log("HAS NEXT >", this.note);
-    if (this.note.hasNext) {
-      chrome.runtime.sendMessage(
-        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: false, goNext: true, note: this.note, snippetId: this.note.sid },
-        (response) => {
-          console.log("RESULT FOR NEXT NAVIGATION:", response);
-          // this.showDefaultNotes(response.notes, url, response.active_note);
-        }
-      );
-
-    }
-    console.log("Next button clicked");
-  }
-}
-
-class SnippetorManager {
-  constructor() {
-    this.currentLocation = "";
-    this.currentHash = "";
-    this.skipTwice = 2;
-    this.isCssAttached = false;
-    this.lineChangeNote = null;
-
-    //
-    // TODO: Clean up created notes, on remove, and on cancel note creation!!!
-    //
-    this.createdNotes = [];
-
-    // Attach event listeners when the document is ready
-    if (document.readyState === "complete" || document.readyState === "interactive") {
-      this.addDoubleClickListeners();
-    } else {
-      window.addEventListener("DOMContentLoaded", () => this.addDoubleClickListeners());
-    }
-
-    // Handle navigation changes
-    navigation.addEventListener("navigate", (data) => this.handleNavigation());
-    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-      if (message.action === "onNoteAdd") {
-        this.showAddedNote({
-          id: message.nid,
-          text: message.text,
-          url: message.url,
-          sid: message.sid,
-          hasNext: message.hasNext,
-          hasPrev: message.hasPrev
-        }, message.sid);
-      } else if (message.action === "onNoteSelect") {
-        //
-        // Work-around when notes are in the same file
-        //
-        this.createdNotes.forEach((wnote) => {
-          // hide all except current
-          wnote.displayContainer(wnote.note.id == message.nid);
-        });
-      } else if (message.action === "onNoteUpdate") {
-        console.log("Update current note", message);
-        this.createdNotes.forEach((wnote) => {
-          if (wnote.note.id == message.nid) {
-            if (message.text != undefined)
-              wnote.note.text = message.text;
-            // TODO: handle line change. (move snippet to a new line)
-            if (message.url != undefined)
-              wnote.note.url = message.url;
-            if (message.hasNext != undefined)
-              wnote.note.hasNext = message.hasNext;
-            if (message.hasPrev != undefined)
-              wnote.note.hasPrev = message.hasPrev;
-            wnote.redraw(wnote.isVisible());
-          }
-        });
-      } else if (message.action === "onNoteRemove") {
-        console.log("MESSAGE !!!!", message);
-        this.createdNotes = this.createdNotes.filter((wnote) => {
-          
-          if (wnote.note.id == message.nid) {
-              wnote.remove(); // Remove the actual DOM element
-              return false; // Exclude this wnote from the new array
-          }
-          return true; // Keep this wnote in the new array
-        });
-      } else if (message.action === "onSnippetRemove") {
-        console.log("MESSAGE Remove snippet note ids !!!!", message);
-        this.createdNotes = this.createdNotes.filter((wnote) => {
-          if (message.nids.includes(wnote.note.id)) {
-              wnote.remove(); // Remove the actual DOM element
-              return false; // Exclude this wnote from the new array
-          }
-          return true; // Keep this wnote in the new array
-        });
-      }
-    });
-  }
-
-  isBlobUrl(url) {
-    const urlObj = new URL(url);
-    const pathParts = urlObj.pathname.split("/");
-    return urlObj.protocol === "https:" && pathParts.length > 3 && pathParts[3] === "blob";
-  }
-
-  isCodeResource(url) {
-    // TODO: add extra media resources if needed
-    const excludedExtensions = [
-      ".md", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp",
-      ".mp3", ".wav", ".ogg", ".flac", ".aac",
-      ".mp4", ".mov", ".avi", ".wmv", ".mkv", ".webm"
-    ];
-    const urlObj = new URL(url);
-    const path = urlObj.pathname.toLowerCase();
-  
-    return !excludedExtensions.some(extension => path.endsWith(extension));
-  }
-
-  addDoubleClickListeners(forceTimer = true) {
-
-    // Check that url start with blob and that it is not media resource
-    if (!this.isBlobUrl(window.location.href) || !this.isCodeResource(window.location.href)) {
-      console.log("NOT A BLOB or CODE resource !! EXIT !");
-      return;
-    }
-    // TODO: check lines from the code area only.
-    //       And avoid search lines or "All symbols" container lines on the right side
-    const lineNumbers = this.getCodeLines();
-
-    if (lineNumbers.length === 0 && forceTimer) {
-      // give 0.3 second for UI to show lines
-      setTimeout(() => this.addDoubleClickListeners(), 300);
-      return;
-    } else {
-      console.log("HAS a number of LINES YET !!!" + lineNumbers.length);
-    }
-
-    // once
-    this.attachGlobalCss();
-
-    lineNumbers.forEach((lineNumber) => {
-      if (!lineNumber.hasListenerAttached) {
-        lineNumber.addEventListener("dblclick", () => {
-          if (lineNumber.snippetorInstance) {
-            // Show note again
-            lineNumber.snippetorInstance.onRestore();
-            return;
-          }
-
-          if (this.lineChangeNote != null) {
-            this.showPreviewContainer(this.lineChangeNote.note, lineNumber, lineNumbers, true);
-            this.lineChangeNote.remove();
-            this.lineChangeNote = null;
-            
-            // force line update message to the backend
-            if (lineNumber.snippetorInstance) {
-              lineNumber.snippetorInstance.forceLineUpdate();
-            }
-            return;
-          }
-          //
-          // minimize all containers which are in the view mode
-          // to make it easier to show edit container
-          // Note: this method does not hide save notes which are in edit mode
-          this.hideAllViewContainers();
-          // There is no container attached. Make a new one.
-          this.showEditContainer({ id: -1, text: "" }, lineNumber, lineNumbers);
-        });
-        lineNumber.hasListenerAttached = true; // Mark that listener is attached
-      }
-    });
-
-    // url changed, let's load notes for a new url
-    this.loadNotesForCurrentUrl(window.location.href);
-  }
-
-  attachGlobalCss() {
-    if (this.isCssAttached)
-      return;
-    this.isCssAttached = true;
-
+   getCssElement() {
     const globalStyles = `
       .snippetor-sn-note-input {
         position: absolute;
@@ -496,7 +62,6 @@ class SnippetorManager {
         flex-direction: column;
         gap: 10px;
         z-index: 1000;
-        top: 0;
       }
       .snippetor-error-message {
         color: pink;
@@ -504,8 +69,8 @@ class SnippetorManager {
         align-items: center;
       }
       .snippetor-note-textarea {
-        width: 100%;
-        height: 120px;
+        width: calc(100% - 10px);
+        min-height: 120px;
         border: 1px solid #ccc;
         border-radius: 4px;
         padding: 5px;
@@ -514,16 +79,6 @@ class SnippetorManager {
       }
       .snippetor-note-textarea-wrapper {
         display: contents;
-      }
-      .snippetor-note-circle {
-        width: 12px;
-        height: 12px;
-        background-color: blue;
-        opacity: 0.5;
-        border-radius: 50%;
-        position: absolute;
-        margin-top: -20px;
-        margin-left: 0px;
       }
       .snippetor-close-button {
         cursor: pointer;
@@ -647,16 +202,504 @@ class SnippetorManager {
     const styleElement = document.createElement("style");
     styleElement.type = "text/css";
     styleElement.textContent = globalStyles;
+    return styleElement;
+  }
+
+  redraw(isActiveNote = false) {
+    if (this.state === "view") {
+      this.renderPreviewContainer(isActiveNote);
+    } else {
+      this.renderEditContainer();
+    }
+  }
+
+  remove() {
+    // Remove circle
+    if (this.circle) {
+      this.circle.remove();
+      this.circle = null;
+    }
+    
+    // Remove input container
+    if (this.lineNumber.inputContainer) {
+      this.lineNumber.inputContainer.remove();
+      this.lineNumber.inputContainer = null;
+    }
+
+    // remove reference on this
+    this.lineNumber.snippetorNote = null;
+
+    // renmove lines
+    this.lineNumber = null;
+    this.lineNumbers = null;
+  }
+
+  isVisible() { 
+    if (!this.lineNumber || !this.lineNumber.inputContainer)
+      return false;
+    return this.lineNumber.inputContainer.style.display != "none";
+
+  }
+
+  displayContainer(isVisible) {
+    // we could hide/show the view containers only
+    // edit-state containers should be visible unless user change
+    // url or press cancel button
+    if (this.lineNumber && this.lineNumber.inputContainer && this.state == "view") {
+      this.lineNumber.inputContainer.style.display = isVisible ? "flex" : "none";
+    }
+  }
+  
+  // Method to remove any existing container
+  removeExistingContainer() {
+    if (this.lineNumber && this.lineNumber.inputContainer) {
+      this.lineNumber.inputContainer.remove();
+      this.lineNumber.inputContainer = null;
+      // this.lineNumber.snippetorNote = null;
+    }
+  }
+
+  forceLineUpdate() {
+    const errorArea = this.lineNumber.inputContainer.querySelector(".snippetor-error-message");
+    // Force to send line position change
+    this.onSave(errorArea, this.note.text, true);
+  }
+
+  // Method to render preview container
+  renderPreviewContainer(isActiveNote) {
+    this.removeExistingContainer();
+
+    // Create the container element
+    const inputContainer = document.createElement("div");
+    inputContainer.className = "snippetor-sn-note-input";
+
+    // Adjust position based on line index
+    const rect = this.lineNumber.getBoundingClientRect();
+    inputContainer.style.left = "45px";
+
+    // Define the HTML template for preview mode
+    inputContainer.innerHTML = `
+        <div class="sn-corner"></div>
+        <div class="snippetor-close-button-wrapper">
+            <div role="group" aria-label="repo link" class="sn-btn-group">
+              <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
+              <button type="button" title="Default branch" class="sn-btn">${this.note.defaultBranch}</button>
+            </div>
+            <div class="sn-max-space"></div>
+            <span class="snippetor-move-button" title="Move to another line">${strings.moveIcon}</span>
+            <span class="snippetor-edit-button" title="Edit text">${strings.editIcon}</span>
+            <span class="snippetor-minimize-button" title="Minimize">${strings.minimizeIcon}</span>
+        </div>
+        <div class="snippetor-note-textarea-wrapper">
+            <textarea class="snippetor-note-textarea" readonly>${this.note.text}</textarea>
+        </div>
+        <div class="snippetor-button-container">
+            <button class="snippetor-button snippetor-previous-button">Prev</button>
+            <button class="snippetor-button snippetor-next-button">Next</button>
+        </div>
+    `;
+    inputContainer.style.display = isActiveNote ? "flex" : "none"; 
+    // Append the inputContainer to the lineNumber
+    this.shadow.appendChild(inputContainer);
+    this.lineNumber.inputContainer = inputContainer;
+
+    // Query the buttons and other elements
+    const closeButton = inputContainer.querySelector(".snippetor-minimize-button");
+    const editButton = inputContainer.querySelector(".snippetor-edit-button");
+    const previousButton = inputContainer.querySelector(".snippetor-previous-button");
+    const nextButton = inputContainer.querySelector(".snippetor-next-button");
+    const moveButton = inputContainer.querySelector(".snippetor-move-button");
+
+    // Event Listeners for preview mode
+    closeButton.addEventListener("click", (e) => {
+      this.onMinimize(inputContainer);
+      e.preventDefault();
+      return true;
+    });
+    editButton.addEventListener("click", () => {
+      this.state = "edit";
+      this.renderEditContainer();
+    });
+    previousButton.addEventListener("click", () => this.onPrevious());
+    nextButton.addEventListener("click", () => this.onNext());
+    moveButton.addEventListener("click", () => {
+      const isActive = moveButton.classList.contains("sn-move-active");
+      if (isActive) {
+        moveButton.classList.remove("sn-move-active");
+      } else {
+        moveButton.classList.add("sn-move-active");
+      }
+      //
+      // Disable active if needed
+      this.onLineMove(isActive ? null: this);
+    });
+
+    this.updateNextPrev(inputContainer);
+  }
+
+  onLineMove(data) {
+    if (this.onLineChangeCallback)
+      this.onLineChangeCallback(data);
+  }
+
+  updateNextPrev(inputContainer) {
+    const previousButton = inputContainer.querySelector(".snippetor-previous-button");
+    const nextButton = inputContainer.querySelector(".snippetor-next-button");
+    nextButton.disabled =  !this.note.hasNext;
+    previousButton.disabled = !this.note.hasPrev;
+  }
+
+  // Method to render edit container
+  renderEditContainer() {
+    this.removeExistingContainer();
+
+    // Create the container element
+    const inputContainer = document.createElement("div");
+    inputContainer.className = "snippetor-sn-note-input";
+
+    // Adjust position based on line index
+    const rect = this.lineNumber.getBoundingClientRect();
+    inputContainer.style.left = "45px";
+
+    // Define the HTML template for edit mode
+    inputContainer.innerHTML = `
+        <div class="sn-corner"></div>
+        <div class="snippetor-close-button-wrapper">
+            <div role="group" aria-label="repo link" class="sn-btn-group">
+              <button type="button" title="Current tree sha" class="sn-btn sn-active">${this.note.blob.slice(0, 7)}</button>
+              <button type="button" title="Default branch" class="sn-btn">${this.note.defaultBranch}</button>
+            </div>
+            <div class="sn-max-space"></div>
+            <span class="snippetor-close-button">${strings.closeIcon}</span>
+        </div>
+        <textarea class="snippetor-note-textarea">${this.note.text}</textarea>
+        <p class="snippetor-error-message"></p>
+        <div class="snippetor-button-container">
+            <button class="snippetor-button snippetor-cancel-button">Cancel</button>
+            <button class="snippetor-button snippetor-done-button">Save</button>
+            <button class="snippetor-button snippetor-update-button">Update</button>
+        </div>
+    `;
+
+    // Append the inputContainer to the lineNumber
+    this.shadow.appendChild(inputContainer);
+    this.lineNumber.inputContainer = inputContainer;
+    if (this.note.id <= 0)
+      this.lineNumber.inputContainer.classList.add("snippetor-create");
+
+    // Query the buttons and other elements
+    const closeButton = inputContainer.querySelector(".snippetor-close-button");
+    const cancelButton = inputContainer.querySelector(".snippetor-cancel-button");
+    const doneButton = inputContainer.querySelector(".snippetor-done-button");
+    const updateButton = inputContainer.querySelector(".snippetor-update-button");
+    const textArea = inputContainer.querySelector(".snippetor-note-textarea");
+    const errorArea = inputContainer.querySelector(".snippetor-error-message");
+
+    textArea.addEventListener('keydown', (event) => {
+      event.stopPropagation();
+    });
+    // Event Listeners for edit mode
+    cancelButton.addEventListener("click", (event) => {
+      this.onCancel(inputContainer);
+      event.stopPropagation();
+      event.preventDefault();
+    });
+    closeButton.addEventListener("click", (event) => {
+      this.onClose(inputContainer);
+      event.stopPropagation();
+      event.preventDefault();
+    });
+    doneButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      this.onSave(errorArea, textArea.value, false);
+    });
+    updateButton.addEventListener("click", (event) => {
+      this.onSave(errorArea, textArea.value, true);
+      event.stopPropagation();
+      event.preventDefault();
+    });
+  }
+
+  // Callback: Minimize the container and show a circle
+  onMinimize(inputContainer) {
+    if (this.lineNumber.inputContainer) {
+      this.lineNumber.inputContainer.style.display = "none";
+    }
+  }
+
+  // Callback: Restore the container from the minimized state
+  onRestore() {
+    if (this.lineNumber.inputContainer) {
+      this.lineNumber.inputContainer.style.display = "flex";
+    }
+  }
+
+  // Callback: Close the container
+  onClose(inputContainer) {
+    // remove element if it is create mode
+    if (this.note.id <= 0) {
+      inputContainer.remove();
+      this.lineNumber.snippetorNote = null; // Remove reference to the instance
+    }
+    else {
+      // and cancel change if it is edit mode
+      this.onCancel(inputContainer);
+    }
+  }
+
+  // Callback: Cancel the edit operation
+  onCancel(inputContainer) {
+    this.state = "view";
+    this.renderPreviewContainer();
+  }
+
+  // Callback: Save the note and switch to preview mode
+  onSave(errorArea, text, isUpdate) {
+    const note = {
+      id: this.note.id,
+      sid: this.note.sid || -1,
+      url: window.location.href,
+      text: text.trim(),
+      defaultBranch: this.note.defaultBranch,
+      blob: this.note.blob
+    };
+
+    // Send a message to the background script to save the note
+    chrome.runtime.sendMessage({
+      action: isUpdate ? "SnBackground.updateNote" : "SnBackground.saveNote",
+      note, snippetId: note.sid, isContentScript: true }, (response) => {
+      if (response?.success) {
+        console.log("Note saved successfully!");
+        // After saving, switch back to preview mode
+        this.note.text = text.trim(); // Update the text data
+        console.log("ASSIGN ID : " + response.noteId);
+        this.note.id = response.noteId;
+        this.note.sid = response.snippetId;
+        this.note.hasNext = response.hasNext;
+        this.note.hasPrev = response.hasPrev;
+        this.state = "view";
+        this.renderPreviewContainer();
+        this.displayContainer(true);
+      } else {
+        // Show failed message
+        const td = "Failed to save the note:" + response.error;
+        errorArea.innerHTML = strings.reportIcon + td;
+      }
+    });
+  }
+
+  // Callback: Navigate to the previous note or line (logic to be implemented)
+  onPrevious() {
+    if (this.note.hasPrev) {
+      chrome.runtime.sendMessage(
+        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: true, goNext: false, note: this.note, snippetId: this.note.sid },
+        (response) => {
+          console.log("RESULT FOR PREV NAVIGATION:", response);
+          // this.showDefaultNotes(response.notes, url, response.active_note);
+        }
+      );
+      
+    }
+    console.log("Previous button clicked");
+  }
+
+  // Callback: Navigate to the next note or line (logic to be implemented)
+  onNext() {
+    console.log("HAS NEXT >", this.note);
+    if (this.note.hasNext) {
+      chrome.runtime.sendMessage(
+        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: false, goNext: true, note: this.note, snippetId: this.note.sid },
+        (response) => {
+          console.log("RESULT FOR NEXT NAVIGATION:", response);
+          // this.showDefaultNotes(response.notes, url, response.active_note);
+        }
+      );
+
+    }
+    console.log("Next button clicked");
+  }
+}
+
+class SnippetorManager {
+  constructor() {
+    this.currentLocation = "";
+    this.currentHash = "";
+    this.skipTwice = 2;
+    this.isCssAttached = false;
+    this.lineChangeNote = null;
+
+    this.parser = getContentParser(window.location.href);
+
+    //
+    // TODO: Clean up created notes, on remove, and on cancel note creation!!!
+    //
+    this.createdNotes = [];
+
+    // Attach event listeners when the document is ready
+    if (document.readyState === "complete" || document.readyState === "interactive") {
+      this.addDoubleClickListeners();
+    } else {
+      window.addEventListener("DOMContentLoaded", () => this.addDoubleClickListeners());
+    }
+
+    // Handle navigation changes
+    navigation.addEventListener("navigate", (data) => this.handleNavigation());
+    chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+      if (message.action === "onNoteAdd") {
+        this.showAddedNote({
+          id: message.nid,
+          text: message.text,
+          url: message.url,
+          sid: message.sid,
+          hasNext: message.hasNext,
+          hasPrev: message.hasPrev
+        }, message.sid);
+      } else if (message.action === "onNoteSelect") {
+        //
+        // Work-around when notes are in the same file
+        //
+        this.createdNotes.forEach((wnote) => {
+          // hide all except current
+          wnote.displayContainer(wnote.note.id == message.nid);
+        });
+      } else if (message.action === "onNoteUpdate") {
+        console.log("Update current note", message);
+        this.createdNotes.forEach((wnote) => {
+          if (wnote.note.id == message.nid) {
+            if (message.text != undefined)
+              wnote.note.text = message.text;
+            // TODO: handle line change. (move snippet to a new line)
+            if (message.url != undefined)
+              wnote.note.url = message.url;
+            if (message.hasNext != undefined)
+              wnote.note.hasNext = message.hasNext;
+            if (message.hasPrev != undefined)
+              wnote.note.hasPrev = message.hasPrev;
+            wnote.redraw(wnote.isVisible());
+          }
+        });
+      } else if (message.action === "onNoteRemove") {
+        console.log("MESSAGE !!!!", message);
+        this.createdNotes = this.createdNotes.filter((wnote) => {
+          
+          if (wnote.note.id == message.nid) {
+              wnote.remove(); // Remove the actual DOM element
+              return false; // Exclude this wnote from the new array
+          }
+          return true; // Keep this wnote in the new array
+        });
+      } else if (message.action === "onSnippetRemove") {
+        console.log("MESSAGE Remove snippet note ids !!!!", message);
+        this.createdNotes = this.createdNotes.filter((wnote) => {
+          if (message.nids.includes(wnote.note.id)) {
+              wnote.remove(); // Remove the actual DOM element
+              return false; // Exclude this wnote from the new array
+          }
+          return true; // Keep this wnote in the new array
+        });
+      }
+    });
+  }
+
+  removeNoteFromList(elementToRemove) {
+    this.createdNotes = this.createdNotes.filter(note => note !== elementToRemove);
+  }
+
+  addDoubleClickListeners(forceTimer = true) {
+
+    // Check that url start with blob and that it is not media resource
+    if (!this.parser.isBlobUrl(window.location.href) || !this.parser.isCodeResource(window.location.href)) {
+      console.log("NOT A BLOB or CODE resource !! EXIT !");
+      return;
+    }
+    // TODO: check lines from the code area only.
+    //       And avoid search lines or "All symbols" container lines on the right side
+    const lineNumbers = this.parser.getCodeLines();
+
+    if (lineNumbers.length === 0 && forceTimer) {
+      // give 0.3 second for UI to show lines
+      setTimeout(() => this.addDoubleClickListeners(), 300);
+      return;
+    } else {
+      console.log("HAS a number of LINES YET !!!" + lineNumbers.length);
+    }
+
+    // once
+    this.attachGlobalCss();
+
+    lineNumbers.forEach((lineNumber) => {
+      if (!lineNumber.hasListenerAttached) {
+        lineNumber.addEventListener("dblclick", () => {
+          if (lineNumber.snippetorNote) {
+            // Show note again
+            lineNumber.snippetorNote.onRestore();
+            return;
+          }
+
+          if (this.lineChangeNote != null) {
+            this.showPreviewContainer(this.lineChangeNote.note, lineNumber, lineNumbers, true);
+            this.removeNoteFromList(this.lineChangeNote);
+            this.lineChangeNote.remove();
+            this.lineChangeNote = null;
+            
+            // force line update message to the backend
+            if (lineNumber.snippetorNote) {
+              lineNumber.snippetorNote.forceLineUpdate();
+            }
+            return;
+          }
+          //
+          // minimize all containers which are in the view mode
+          // to make it easier to show edit container
+          // Note: this method does not hide save notes which are in edit mode
+          this.hideAllViewContainers();
+          // There is no container attached. Make a new one.
+          this.showEditContainer({ id: -1, text: "" }, lineNumber, lineNumbers);
+        });
+        lineNumber.hasListenerAttached = true; // Mark that listener is attached
+      }
+    });
+
+    // url changed, let's load notes for a new url
+    this.loadNotesForCurrentUrl(window.location.href);
+  }
+
+  attachGlobalCss() {
+    if (this.isCssAttached)
+      return;
+    this.isCssAttached = true;
+    const styleElement = this.getCssElement();
     document.head.appendChild(styleElement);
   }
 
+  getCssElement() {
+    const globalStyles = `
+      .snippetor-note-circle {
+        width: 12px;
+        height: 12px;
+        background-color: blue;
+        border-radius: 50%;
+        position: absolute;
+        margin-top: -20px;
+        margin-left: 0px;
+      }
+    `;
+
+    // Inject the global styles into the page
+    const styleElement = document.createElement("style");
+    styleElement.type = "text/css";
+    styleElement.textContent = globalStyles;
+    return styleElement;
+  }
+
   showPreviewContainer(note, lineNumber, lineNumbers, isActiveNote = false) {
-    if (!lineNumber.snippetorInstance) {
-      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "view", isActiveNote, (data) => {
+    if (!lineNumber.snippetorNote) {
+      this.createdNotes.push(new SnippetorContainer(this.parser, note, lineNumber, lineNumbers, "view", isActiveNote, (data) => {
         this.lineChangeNote = data;
       }));
     } else {
-      lineNumber.snippetorInstance.displayContainer(isActiveNote);
+      lineNumber.snippetorNote.displayContainer(isActiveNote);
     }
   
   }
@@ -669,44 +712,76 @@ class SnippetorManager {
   }
 
   showEditContainer(note, lineNumber, lineNumbers) {
-    const blob = this.findEmbeddedDataWithBranchAndOid();
+    const blob = this.parser.getDefaultBranchAndBlob();
     note.defaultBranch = blob.defaultBranch;
     note.blob = blob.currentOid;
-    console.log("HAS Blob:", blob);
-    if (!lineNumber.snippetorInstance) {
-      this.createdNotes.push(new SnippetorContainer(note, lineNumber, lineNumbers, "edit", true, (data) => {
+    // has attached snippetor container
+    if (!lineNumber.snippetorNote) {
+      this.createdNotes.push(new SnippetorContainer(this.parser, note, lineNumber, lineNumbers, "edit", true, (data) => {
         this.lineChangeNote = data;
       }));
     } else {
-      lineNumber.snippetorInstance.displayContainer(true);
+      lineNumber.snippetorNote.displayContainer(true);
     }
   }
 
-  parseStartLineNumber(url) {
-    const hash = new URL(url).hash;
-
-    if (!hash.startsWith("#L")) {
-      console.error("No line number information in the URL.");
-      return -1;
+  showAddedNote(note, snippetId) {
+    const lines = this.parser.getCodeLines(); 
+    const lineElement = this.parser.getCodeLineByUrl(note.url);
+    if (lines.length > 0 && lineElement) {
+      this.showPreviewContainer(note, lineElement, lines, false);
     }
-
-    const linePart = hash.slice(2); // Remove "#L"
-    const startLine = parseInt(linePart.split("-")[0], 10);
-
-    if (!startLine) {
-      console.error("Invalid line numbers in the URL.");
-      return -1;
-    }
-
-    console.log("HAS START LINE AS: " + startLine);
-    return startLine;
   }
 
+  showDefaultNotes(notes, activeId) {
+    console.log("SHOW NOTES: ", notes);
+    const lineNumbers = this.parser.getCodeLines();
+
+    notes.forEach((note) => {
+      const isActiveNote = note.id === activeId;
+      const elem = this.parser.getCodeLineByUrl(note.url);
+      if (elem) {
+          this.showPreviewContainer(note, elem, lineNumbers, isActiveNote);
+      }
+    });
+  }
+
+  loadNotesForCurrentUrl(url) {
+    chrome.runtime.sendMessage(
+      { action: "SnBackground.getNotesForUrl", url: url },
+      (response) => {
+        this.showDefaultNotes(response.notes, response.active_note);
+      }
+    );
+  }
+
+  handleNavigation() {
+    //
+    // TODO: find another way to check navigation change
+    //       because we are getting ~4-5 notifications on each
+    //       path change.
+    if (window.location.pathname !== this.currentLocation) {
+      if (this.skipTwice < 2) {
+        ++this.skipTwice;
+        return;
+      }
+      this.skipTwice = 0;
+      this.currentLocation = window.location.pathname;
+      this.currentHash = window.location.hash;
+      this.addDoubleClickListeners(true);
+    }
+    else if (this.currentHash != window.location.hash) {
+      console.log("TODO: HANDLE HASH CHANGE");
+    }
+  }
+}
+
+class GitHubContentParser {
   getCodeLines() {
     return document.querySelectorAll("div.react-code-file-contents > div.react-line-numbers > div.react-line-number");
   }
 
-  findEmbeddedDataWithBranchAndOid() {
+  getDefaultBranchAndBlob() {
     // Define the script selector as a constant
     const scriptSelector = 'script[data-target="react-app.embeddedData"]';
 
@@ -738,62 +813,151 @@ class SnippetorManager {
     return null;
   }
 
-  getCodeLineElement(url) {
+  parseStartLineNumber(url) {
+    const hash = new URL(url).hash;
+
+    if (!hash.startsWith("#L")) {
+      console.error("No line number information in the URL.");
+      return -1;
+    }
+
+    const linePart = hash.slice(2); // Remove "#L"
+    const startLine = parseInt(linePart.split("-")[0], 10);
+
+    if (!startLine) {
+      console.error("Invalid line numbers in the URL.");
+      return -1;
+    }
+
+    return startLine;
+  }
+
+  getCodeLineByUrl(url) {
     const startLine = this.parseStartLineNumber(url);
     return document.querySelector(`div[data-line-number="${startLine}"]`);
   }
 
-  showAddedNote(note, snippetId) {
-    const lines = this.getCodeLines();
-    const lineElement = this.getCodeLineElement(note.url);
-    if (lines.length > 0 && lineElement) {
-      this.showPreviewContainer(note, lineElement, lines, false);
+  isBlobUrl(url) {
+    const urlObj = new URL(url);
+    const pathParts = urlObj.pathname.split("/");
+    return urlObj.protocol === "https:" && pathParts.length > 3 && pathParts[3] === "blob";
+  }
+
+  isCodeResource(url) {
+    // TODO: add extra media resources if needed
+    const excludedExtensions = [
+      ".md", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp",
+      ".mp3", ".wav", ".ogg", ".flac", ".aac",
+      ".mp4", ".mov", ".avi", ".wmv", ".mkv", ".webm"
+    ];
+    const urlObj = new URL(url);
+    const path = urlObj.pathname.toLowerCase();
+  
+    return !excludedExtensions.some(extension => path.endsWith(extension));
+  }
+};
+
+
+class GoogleCodeParser {
+  getCodeLines() {
+    return document.querySelectorAll("div.CodeMirror > .line-numbers > div.line-number > a");
+  }
+
+  getDefaultBranchAndBlob() {
+    return {
+      currentOid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      defaultBranch: "master"
+    }
+    /*
+    // Define the script selector as a constant
+    const scriptSelector = 'script[data-target="react-app.embeddedData"]';
+
+    // Select all script tags with the specified selector
+    const scriptTags = document.querySelectorAll(scriptSelector);
+
+    // Iterate through the script tags and parse the JSON content
+    for (const scriptTag of scriptTags) {
+        try {
+            const jsonData = JSON.parse(scriptTag.textContent);
+
+            // Check if the required properties exist in the JSON object
+            if (
+                jsonData?.payload?.repo?.defaultBranch &&
+                jsonData?.payload?.refInfo?.currentOid
+            ) {
+                // Return the structure with the required items
+                return {
+                    defaultBranch: jsonData.payload.repo.defaultBranch,
+                    currentOid: jsonData.payload.refInfo.currentOid
+                };
+            }
+        } catch (error) {
+            console.error('Error parsing JSON data:', error);
+        }
+    }
+
+    // Return null if no matching object is found
+    return null;
+    */
+  }
+
+  parseStartLineNumber(url) {
+    try {
+      const lineNumberMatch = url.match(/;l=(\d+)/);
+  
+      if (!lineNumberMatch || lineNumberMatch.length < 2) {
+        console.error("No line number information in the URL.");
+        return -1;
+      }
+  
+      const startLine = parseInt(lineNumberMatch[1], 10);
+  
+      if (isNaN(startLine)) {
+        console.error("Invalid line number in the URL.");
+        return -1;
+      }
+  
+      return startLine;
+    } catch (error) {
+      console.error("Error parsing URL:", error);
+      return -1;
     }
   }
 
-  showDefaultNotes(notes, url, activeId) {
-    const lineNumbers = this.getCodeLines();
-
-    notes.forEach((note) => {
-      const isActiveNote = note.id === activeId;
-      const startLine = this.parseStartLineNumber(note.url);
-      const elem = document.querySelector(`div[data-line-number="${startLine}"]`);
-      console.log("Evgeny Debug : " + startLine + " HAS ELEMEN:", elem);
-      if (elem) {
-          this.showPreviewContainer(note, elem, lineNumbers, isActiveNote);
-      }
-    });
+  getCodeLineByUrl(url) {
+    const startLine = this.parseStartLineNumber(url);
+    return document.querySelector(`div.CodeMirror > .line-numbers > div.line-number > a[data-line-number="${startLine}"]`);
   }
 
-  loadNotesForCurrentUrl(url) {
-    console.log("loadNotesForCurrentUrl");
-    chrome.runtime.sendMessage(
-      { action: "SnBackground.getNotesForUrl", url: url },
-      (response) => {
-        this.showDefaultNotes(response.notes, url, response.active_note);
-      }
-    );
+  isBlobUrl(url) {
+    const urlObj = new URL(url);
+    return urlObj.protocol === "https:" && !urlObj.pathname.endsWith("/");
   }
 
-  handleNavigation() {
-    //
-    // TODO: find another way to check navigation change
-    //       because we are getting ~4-5 notifications on each
-    //       path change.
-    if (window.location.pathname !== this.currentLocation) {
-      if (this.skipTwice < 2) {
-        ++this.skipTwice;
-        return;
-      }
-      this.skipTwice = 0;
-      this.currentLocation = window.location.pathname;
-      this.currentHash = window.location.hash;
-      this.addDoubleClickListeners(true);
-    }
-    else if (this.currentHash != window.location.hash) {
-      console.log("HASH WAS CHANGED");
-    }
+  isCodeResource(url) {
+    // TODO: add extra media resources if needed
+    const excludedExtensions = [
+      ".md", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".bmp",
+      ".mp3", ".wav", ".ogg", ".flac", ".aac",
+      ".mp4", ".mov", ".avi", ".wmv", ".mkv", ".webm"
+    ];
+    const urlObj = new URL(url);
+    const path = urlObj.pathname.toLowerCase().split(";")[0];
+  
+    return !excludedExtensions.some(extension => path.endsWith(extension));
   }
+};
+
+
+function getContentParser(url)  {
+  if (url.startsWith("https://github.com")) {
+    return new GitHubContentParser();
+  }
+  if (url.startsWith("https://source.chromium.org/")) {
+    return new GoogleCodeParser();
+  }
+  
+  return null;
 }
 
 // Initialize url change tracker

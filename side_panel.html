@@ -23,10 +23,10 @@
     }
 
     #dw-dark-mode-toggle {
-      display: flex;
-      justify-content: end;
-      width: 100%;
-      padding-bottom: 8px;
+      display: block;
+      position: absolute;
+      top: 10px;
+      right: 10px;
     }
 
     #dw-snippet-controls {
@@ -52,38 +52,78 @@
       /* Show '...' if text is too long */
     }
 
+    /* DROPDOWN START */
     .sn-dropdown {
       position: relative;
       display: inline-block;
       min-width: fit-content;
     }
 
+    .sn-dropdown>button {
+      background-color: #F6F8Fa;
+      color: #25292e;
+      border: 1px solid #d1d9e0;
+      box-shadow: 0px 1px 0px 0px #1f23280a;
+      border-radius: 6px;
+      padding: 8px 16px;
+      /* Smaller padding for a smaller button */
+      font-size: 14px;
+      /* Smaller font size */
+      cursor: pointer;
+      transition: background-color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .sn-dropdown>button:hover {
+      background-color: #eff2f5;
+      border-color: #d1d9e0;
+      opacity: 0.9;
+    }
+
+    .sn-dropdown>button:active {
+      background-color: #e6eaef;
+      border-color: #d1d9e0;
+    }
+
     .sn-dropdown-content {
       display: none;
       position: absolute;
       background-color: #ffffff;
-      min-width: 160px;
+      min-width: 200px;
       box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
       z-index: 1;
       border-radius: 4px;
+      margin-top: 4px;
+      padding: 8px 0;
+      border: 1px solid #ddd;
     }
 
     .sn-dropdown-content a {
-      color: black;
-      padding: 10px 12px;
+      color: #212529;
+      padding: 8px 12px;
+      /* Slightly reduced padding */
       text-decoration: none;
       display: flex;
       align-items: center;
+      font-size: 12px;
+      /* Smaller font size */
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
 
     .sn-dropdown-content a:hover {
-      background-color: #f1f1f1;
+      background-color: #f8f9fa;
+      color: #0056b3;
     }
 
     .sn-dropdown:hover .sn-dropdown-content {
       display: block;
     }
 
+    .sn-divider {
+      border-top: 1px solid #e9ecef;
+      margin: 8px 0;
+    }
+
+    /* DROPDOWN END */
     .sn-note {
       border: 1px solid #ccc;
       padding: 5px;
@@ -327,16 +367,18 @@
 
     #dw-snippet-list {
       height: calc(100vh - 250px);
-      display:none;
+      display: none;
       text-align: center;
       align-items: center;
       justify-content: center;
     }
+
     #dw-note-list {
       max-height: calc(100vh - 250px);
       overflow-y: scroll;
       padding-right: 16px;
     }
+
     .sn-snippet-mode #dw-snippet-controls {
       display: none;
     }
@@ -354,6 +396,52 @@
       padding: 32px;
       border-radius: 16px;
     }
+
+    /* blob | master */
+    #dw-branch-toggle {
+      display: flex;
+      justify-content: end;
+      padding: 10px;
+    }
+
+    #dw-button-group {
+      display: inline-flex;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .sn-btn {
+      border: none;
+      background-color: #f8f9fa;
+      color: #212529;
+      padding: 4px 8px;
+      /* Smaller padding for smaller buttons */
+      font-size: 12px;
+      /* Reduced font size */
+      text-align: center;
+      flex: 1;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .sn-btn:hover {
+      background-color: #e2e6ea;
+    }
+
+    .sn-btn.active {
+      background-color: #5F6368;
+      color: white;
+    }
+
+    .sn-btn:first-child {
+      border-right: 1px solid #ddd;
+    }
+
+    .sn-btn:last-child {
+      border-left: 1px solid transparent;
+      /* For consistent borders */
+    }
   </style>
 
 </head>
@@ -364,12 +452,15 @@
       <div id="dw-top-level-toolbar">
         <!-- Snippets File-like menu -->
         <div class="sn-dropdown">
-          <button class="sn-button">Snippets ▼</button>
+          <button>Snippets ▼</button>
           <div class="sn-dropdown-content">
-            <a href="#" id="dw-new-snippet" class="sn-button">New</a>
+            <a href="#" id="dw-new-snippet" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px"
+                viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                <path
+                  d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
+              </svg> New</a>
             <div class="sn-divider"></div>
-            <a href="#" class="sn-recent-snippet sn-button">Snippet 1</a>
-            <a href="#" class="sn-recent-snippet sn-button">Snippet 2</a>
+            <!-- add snippet list here -->
           </div>
         </div>
         <!-- Dark Mode Toggle -->
@@ -378,7 +469,7 @@
           <input type="checkbox" id="dw-dark-toggle">
         </div>
       </div>
-      <div class="sn-divider"></div>
+      <!-- div class="sn-divider"></div -->
 
       <!-- Snippet Controls -->
       <div id="dw-snippet-controls">
@@ -396,14 +487,22 @@
         </button>
       </div>
     </div>
+    <div id="dw-branch-toggle">
+      <div id="dw-button-group" class="sn-btn-group">
+        <button class="sn-btn sn-btn-primary active" title="Fixed revision">Blob</button>
+        <button class="sn-btn sn-btn-primary" title="Default branch&#10;Latest Revision">Master</button>
+      </div>
+    </div>
 
     <div id="dw-note-list"></div>
 
     <div id="dw-snippet-list">
       <div id="dw-snippet-list-wrapper" class="sn-wrap-div">
-        <button id="dw-new-snippet-list" class="sn-button">New</button>
-        <div class="sn-recent-snippet">Snippet A</div>
-        <div class="sn-recent-snippet">Snippet B</div>
+        <div id="dw-new-snippet-list" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px"
+            viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+            <path
+              d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
+          </svg>New</div>
       </div>
     </div>
     <div class="sn-divider"></div>

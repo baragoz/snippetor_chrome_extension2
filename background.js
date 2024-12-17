@@ -495,7 +495,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 function sanitizeUrl(url) {
   try {
       const urlObject = new URL(url);
-      return `${urlObject.origin}${urlObject.pathname}`;
+      const pathname = urlObject.pathname.split(";")[0];
+      return `${urlObject.origin}${pathname}`;
   } catch (error) {
       console.error("Error sanitizing URL:", error);
       return url; // If URL parsing fails, return the original URL

@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "Adds note-taking functionality on GitHub with a side panel.",
   "permissions": ["scripting", "tabs", "activeTab", "storage", "sidePanel"],
-  "host_permissions": ["https://github.com/*", "http://localhost:4200/*"],
+  "host_permissions": ["https://source.chromium.org/*","https://github.com/*", "http://localhost:4200/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -26,7 +26,7 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://github.com/*"],
+      "matches": ["https://github.com/*", "https://source.chromium.org/*"],
       "js": ["content.js"]
     },
     {
