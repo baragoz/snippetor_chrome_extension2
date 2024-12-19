@@ -416,18 +416,6 @@ updateNoteText(note, text) {
 
   removeNoteFromStorage(rmNote) {
     chrome.runtime.sendMessage({ action: "SnBackground.removeNote", note: rmNote, snippetId: this.currentSnippetId});
-    /*
-      const notes_id = `notes_${this.currentSnippetId}`;
-      const active_id = `active_note_${this.currentSnippetId}`;
-      chrome.storage.sync.get( { [notes_id] : [], [active_id] : -1 }, (data) => {
-          const notes = (data[notes_id] || []).filter((note) => note.id !== rmNote.id);
-          const newActiveId = (rmNote.id == data[active_id]) ? -1 : data[active_id];
-          chrome.storage.sync.set({ [notes_id]: notes, [active_id]: newActiveId }, () => {
-              this.renderNotes(notes);
-              this.notifyNoteRemove(rmNote);
-          });
-      });
-    */
   }
 
   // Helper function to sanitize URLs
@@ -439,16 +427,6 @@ updateNoteText(note, text) {
       console.error("Error sanitizing URL:", error);
       return url; // If URL parsing fails, return the original URL
     }
-  }
-
-  notifyNoteRemove(note) {
-    const data = {
-      action: "onNoteRemove",
-      url: note.url,
-      nid: note.id,
-      sid: this.currentSnippetId
-    };
-    chrome.runtime.sendMessage({ action: "SnBackground.broadcast", data});
   }
 
   getFileName(url) {

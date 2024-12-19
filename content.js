@@ -9,11 +9,11 @@ let strings = {
 
 
 class SnippetorContainer {
-  constructor(parser, note, lineNumber, lineNumbers, state, isActiveNote, onLineChangeCallback) {
+  constructor(parser, note, snippetId, lineNumber, state, isActiveNote, onLineChangeCallback) {
     this.parser = parser;
     this.note = note; // Contains note.id and note.text
+    this.snippetId = snippetId;
     this.lineNumber = lineNumber;
-    this.lineNumbers = lineNumbers;
     this.state = state; // Can be "view" or "edit"
     this.circle = null; // Reference to the circle element
     this.onLineChangeCallback = onLineChangeCallback;
@@ -231,7 +231,6 @@ class SnippetorContainer {
 
     // renmove lines
     this.lineNumber = null;
-    this.lineNumbers = null;
   }
 
   isVisible() { 
@@ -247,6 +246,9 @@ class SnippetorContainer {
     // url or press cancel button
     if (this.lineNumber && this.lineNumber.inputContainer && this.state == "view") {
       this.lineNumber.inputContainer.style.display = isVisible ? "flex" : "none";
+      if (isVisible) {
+        this.lineNumber.inputContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
     }
   }
   
@@ -320,8 +322,8 @@ class SnippetorContainer {
       this.state = "edit";
       this.renderEditContainer();
     });
-    previousButton.addEventListener("click", () => this.onPrevious());
-    nextButton.addEventListener("click", () => this.onNext());
+    previousButton.addEventListener("click", (evt) => this.onPrevious(evt));
+    nextButton.addEventListener("click", (evt) => this.onNext(evt));
     moveButton.addEventListener("click", () => {
       const isActive = moveButton.classList.contains("sn-move-active");
       if (isActive) {
@@ -386,6 +388,8 @@ class SnippetorContainer {
     this.lineNumber.inputContainer = inputContainer;
     if (this.note.id <= 0)
       this.lineNumber.inputContainer.classList.add("snippetor-create");
+    
+    this.lineNumber.inputContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     // Query the buttons and other elements
     const closeButton = inputContainer.querySelector(".snippetor-close-button");
@@ -458,7 +462,6 @@ class SnippetorContainer {
   onSave(errorArea, text, isUpdate) {
     const note = {
       id: this.note.id,
-      sid: this.note.sid || -1,
       url: window.location.href,
       text: text.trim(),
       defaultBranch: this.note.defaultBranch,
@@ -468,18 +471,16 @@ class SnippetorContainer {
     // Send a message to the background script to save the note
     chrome.runtime.sendMessage({
       action: isUpdate ? "SnBackground.updateNote" : "SnBackground.saveNote",
-      note, snippetId: note.sid, isContentScript: true }, (response) => {
+      note, snippetId: this.snippetId, isContentScript: true }, (response) => {
       if (response?.success) {
-        console.log("Note saved successfully!");
+        console.log("GOR RESP: ", response);
         // After saving, switch back to preview mode
-        this.note.text = text.trim(); // Update the text data
-        console.log("ASSIGN ID : " + response.noteId);
-        this.note.id = response.noteId;
-        this.note.sid = response.snippetId;
-        this.note.hasNext = response.hasNext;
-        this.note.hasPrev = response.hasPrev;
+        this.note = {...response.note};
+        this.note.text = this.note.text.trim(); // Update the text data
+        this.snippetId = response.snippetId;
         this.state = "view";
         this.renderPreviewContainer();
+        // Do not need to think if container is visible. because it should be visible to save/update
         this.displayContainer(true);
       } else {
         // Show failed message
@@ -490,34 +491,29 @@ class SnippetorContainer {
   }
 
   // Callback: Navigate to the previous note or line (logic to be implemented)
-  onPrevious() {
+  onPrevious(evt) {
+    evt.stopPropagation();
     if (this.note.hasPrev) {
       chrome.runtime.sendMessage(
-        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: true, goNext: false, note: this.note, snippetId: this.note.sid },
+        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: true, goNext: false, note: this.note, snippetId: this.snippetId },
         (response) => {
           console.log("RESULT FOR PREV NAVIGATION:", response);
-          // this.showDefaultNotes(response.notes, url, response.active_note);
         }
       );
-      
     }
-    console.log("Previous button clicked");
   }
 
   // Callback: Navigate to the next note or line (logic to be implemented)
-  onNext() {
-    console.log("HAS NEXT >", this.note);
+  onNext(evt) {
+    evt.stopPropagation();
     if (this.note.hasNext) {
       chrome.runtime.sendMessage(
-        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: false, goNext: true, note: this.note, snippetId: this.note.sid },
+        { action: "SnBackground.openSiblingNoteInCurrentTab", goPrev: false, goNext: true, note: this.note, snippetId: this.snippetId },
         (response) => {
           console.log("RESULT FOR NEXT NAVIGATION:", response);
-          // this.showDefaultNotes(response.notes, url, response.active_note);
         }
       );
-
     }
-    console.log("Next button clicked");
   }
 }
 
@@ -547,43 +543,29 @@ class SnippetorManager {
     navigation.addEventListener("navigate", (data) => this.handleNavigation());
     chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (message.action === "onNoteAdd") {
-        this.showAddedNote({
-          id: message.nid,
-          text: message.text,
-          url: message.url,
-          sid: message.sid,
-          hasNext: message.hasNext,
-          hasPrev: message.hasPrev
-        }, message.sid);
+        this.showAddedNote(message.note, message.snippetId);
       } else if (message.action === "onNoteSelect") {
         //
         // Work-around when notes are in the same file
         //
-        this.createdNotes.forEach((wnote) => {
-          // hide all except current
-          wnote.displayContainer(wnote.note.id == message.nid);
+        this.createdNotes.forEach((inst) => {
+          // hide all except current for an active snippet
+          if (inst.snippetId == message.snippetId) {
+            inst.displayContainer(inst.note.id == message.noteId);
+          }
         });
       } else if (message.action === "onNoteUpdate") {
         console.log("Update current note", message);
-        this.createdNotes.forEach((wnote) => {
-          if (wnote.note.id == message.nid) {
-            if (message.text != undefined)
-              wnote.note.text = message.text;
-            // TODO: handle line change. (move snippet to a new line)
-            if (message.url != undefined)
-              wnote.note.url = message.url;
-            if (message.hasNext != undefined)
-              wnote.note.hasNext = message.hasNext;
-            if (message.hasPrev != undefined)
-              wnote.note.hasPrev = message.hasPrev;
-            wnote.redraw(wnote.isVisible());
+        this.createdNotes.forEach((inst) => {
+          if (inst.note.id == message.note.id) {
+            inst.note = message.note;
+            // keep visible if note was opened
+            inst.redraw(inst.isVisible());
           }
         });
       } else if (message.action === "onNoteRemove") {
-        console.log("MESSAGE !!!!", message);
         this.createdNotes = this.createdNotes.filter((wnote) => {
-          
-          if (wnote.note.id == message.nid) {
+          if (wnote.note.id == message.note.id) {
               wnote.remove(); // Remove the actual DOM element
               return false; // Exclude this wnote from the new array
           }
@@ -592,7 +574,8 @@ class SnippetorManager {
       } else if (message.action === "onSnippetRemove") {
         console.log("MESSAGE Remove snippet note ids !!!!", message);
         this.createdNotes = this.createdNotes.filter((wnote) => {
-          if (message.nids.includes(wnote.note.id)) {
+          if (message.snippetId == wnote.snippetId &&
+              message.noteIdList.includes(wnote.note.id)) {
               wnote.remove(); // Remove the actual DOM element
               return false; // Exclude this wnote from the new array
           }
@@ -638,7 +621,7 @@ class SnippetorManager {
           }
 
           if (this.lineChangeNote != null) {
-            this.showPreviewContainer(this.lineChangeNote.note, lineNumber, lineNumbers, true);
+            this.showPreviewContainer(this.lineChangeNote.note, this.lineChangeNote.snippetId, lineNumber, true);
             this.removeNoteFromList(this.lineChangeNote);
             this.lineChangeNote.remove();
             this.lineChangeNote = null;
@@ -655,7 +638,7 @@ class SnippetorManager {
           // Note: this method does not hide save notes which are in edit mode
           this.hideAllViewContainers();
           // There is no container attached. Make a new one.
-          this.showEditContainer({ id: -1, text: "" }, lineNumber, lineNumbers);
+          this.showEditContainer({ id: -1, text: "" }, lineNumber);
         });
         lineNumber.hasListenerAttached = true; // Mark that listener is attached
       }
@@ -693,15 +676,14 @@ class SnippetorManager {
     return styleElement;
   }
 
-  showPreviewContainer(note, lineNumber, lineNumbers, isActiveNote = false) {
+  showPreviewContainer(note, snippetId, lineNumber, isActiveNote = false) {
     if (!lineNumber.snippetorNote) {
-      this.createdNotes.push(new SnippetorContainer(this.parser, note, lineNumber, lineNumbers, "view", isActiveNote, (data) => {
+      this.createdNotes.push(new SnippetorContainer(this.parser, note, snippetId, lineNumber, "view", isActiveNote, (data) => {
         this.lineChangeNote = data;
       }));
     } else {
       lineNumber.snippetorNote.displayContainer(isActiveNote);
     }
-  
   }
 
   hideAllViewContainers() {
@@ -711,13 +693,14 @@ class SnippetorManager {
     });
   }
 
-  showEditContainer(note, lineNumber, lineNumbers) {
-    const blob = this.parser.getDefaultBranchAndBlob();
-    note.defaultBranch = blob.defaultBranch;
-    note.blob = blob.currentOid;
+  showEditContainer(data, lineNumber) {
+    // git, project, [blob|branch|defaultBranch], path, line
+    const fileData = this.parser.getDefaultBranchAndBlob(lineNumber);
+    const note = { ...data, ...fileData};
+
     // has attached snippetor container
     if (!lineNumber.snippetorNote) {
-      this.createdNotes.push(new SnippetorContainer(this.parser, note, lineNumber, lineNumbers, "edit", true, (data) => {
+      this.createdNotes.push(new SnippetorContainer(this.parser, note, -1, lineNumber, "edit", true, (data) => {
         this.lineChangeNote = data;
       }));
     } else {
@@ -729,19 +712,17 @@ class SnippetorManager {
     const lines = this.parser.getCodeLines(); 
     const lineElement = this.parser.getCodeLineByUrl(note.url);
     if (lines.length > 0 && lineElement) {
-      this.showPreviewContainer(note, lineElement, lines, false);
+      this.showPreviewContainer(note, snippetId, lineElement, lines, false);
     }
   }
 
-  showDefaultNotes(notes, activeId) {
+  showDefaultNotes(notes, snippetId, activeId) {
     console.log("SHOW NOTES: ", notes);
-    const lineNumbers = this.parser.getCodeLines();
-
     notes.forEach((note) => {
       const isActiveNote = note.id === activeId;
       const elem = this.parser.getCodeLineByUrl(note.url);
       if (elem) {
-          this.showPreviewContainer(note, elem, lineNumbers, isActiveNote);
+          this.showPreviewContainer(note, snippetId, elem, isActiveNote);
       }
     });
   }
@@ -750,7 +731,7 @@ class SnippetorManager {
     chrome.runtime.sendMessage(
       { action: "SnBackground.getNotesForUrl", url: url },
       (response) => {
-        this.showDefaultNotes(response.notes, response.active_note);
+        this.showDefaultNotes(response.notes, response.snippetId, response.activeNoteId);
       }
     );
   }
@@ -781,7 +762,20 @@ class GitHubContentParser {
     return document.querySelectorAll("div.react-code-file-contents > div.react-line-numbers > div.react-line-number");
   }
 
-  getDefaultBranchAndBlob() {
+  getDefaultBranchAndBlob(lineNumberElement) {
+    let lineNumberString = lineNumberElement.getAttribute('data-line-number');
+    let parsedLineNumber = parseInt(lineNumberString, 10);
+    let pth = window.location.pathname.split("/");
+    let project = "";
+    let oid = "";
+    let path = "";
+    if (pth.length > 4) {
+      project = pth[0] + "/" + pth[1];
+      if (pth[2] == "blob") {
+        oid = pth[3];
+      }
+      path = pth.splice(0, 4).join("/"); 
+    }
     // Define the script selector as a constant
     const scriptSelector = 'script[data-target="react-app.embeddedData"]';
 
@@ -798,9 +792,19 @@ class GitHubContentParser {
                 jsonData?.payload?.repo?.defaultBranch &&
                 jsonData?.payload?.refInfo?.currentOid
             ) {
+                const coid = jsonData.payload.refInfo.currentOid;
+                let currentBranch = jsonData.payload.repo.defaultBranch;
+                if (coid != oid && oid.length != 20) {
+                  currentBranch = oid;
+                }
                 // Return the structure with the required items
                 return {
+                    git: "github",
+                    project: project,
+                    path: path,
+                    line: parsedLineNumber,
                     defaultBranch: jsonData.payload.repo.defaultBranch,
+                    currentBranch: currentBranch,
                     currentOid: jsonData.payload.refInfo.currentOid
                 };
             }
@@ -808,6 +812,8 @@ class GitHubContentParser {
             console.error('Error parsing JSON data:', error);
         }
     }
+
+    
 
     // Return null if no matching object is found
     return null;
@@ -863,42 +869,38 @@ class GoogleCodeParser {
     return document.querySelectorAll("div.CodeMirror > .line-numbers > div.line-number > a");
   }
 
-  getDefaultBranchAndBlob() {
+  getDefaultBranchAndBlob(lineNumberElement) {
+    let lineNumberString = lineNumberElement.getAttribute('data-line-number');
+    let parsedLineNumber = parseInt(lineNumberString, 10);
+
+
+    let branch = ""; // usually it is main branch
+    let path = "";   // normal path
+
+    // Skip the drc= and l= url parameters
+    let pth = window.location.pathname.split(";");
+
+    // Parse the main part of url  $project+/$branch:$path
+    let mainPath = pth[0];
+    const tmp = mainPath.split("+");
+    let project = tmp[0];
+    if (tmp.length > 1) {
+      const tmp2 = tmp[1].split(":");
+      branch = tmp2[0];
+      if (tmp2.length > 1) {
+        path = tmp2[1];
+      }
+    }
+     
+    let oid = "";
+
     return {
-      currentOid: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-      defaultBranch: "master"
+      git: "codesearch",
+      project: project,
+      currentOid: oid,
+      currentBranch: branch,
+      defaultBranch: "main"
     }
-    /*
-    // Define the script selector as a constant
-    const scriptSelector = 'script[data-target="react-app.embeddedData"]';
-
-    // Select all script tags with the specified selector
-    const scriptTags = document.querySelectorAll(scriptSelector);
-
-    // Iterate through the script tags and parse the JSON content
-    for (const scriptTag of scriptTags) {
-        try {
-            const jsonData = JSON.parse(scriptTag.textContent);
-
-            // Check if the required properties exist in the JSON object
-            if (
-                jsonData?.payload?.repo?.defaultBranch &&
-                jsonData?.payload?.refInfo?.currentOid
-            ) {
-                // Return the structure with the required items
-                return {
-                    defaultBranch: jsonData.payload.repo.defaultBranch,
-                    currentOid: jsonData.payload.refInfo.currentOid
-                };
-            }
-        } catch (error) {
-            console.error('Error parsing JSON data:', error);
-        }
-    }
-
-    // Return null if no matching object is found
-    return null;
-    */
   }
 
   parseStartLineNumber(url) {

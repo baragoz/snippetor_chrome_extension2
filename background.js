@@ -58,6 +58,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       const isLastNote = newActiveNote >= (updatedNotes.length - 1);
 
+      message.note.hasNext = !isLastNote;
+      message.note.hasPrev = updatedNotes.length > 1;
+
       console.log("DEBUG UPDATE NOTEs");
         // Note: please, do not join these 2 updates
         chrome.storage.sync.set({ [notesUid]: updatedNotes}, () => {
@@ -66,37 +69,29 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.log("DEBUG UPDATE ACTIVE NOTE DONE");
             sendResponse({
               success: true,
-              noteId: message.note.id,
+              note: message.note,
               snippetId: activeSnippetId,
-              hasNext: !isLastNote, // not the last note in a list
-              hasPrev: updatedNotes.length > 1  // has more than 1 note in a list
             });
             console.log("DEBUG NOTIFY");
 
             if (newActiveNote > 0 && isLastNote && oldActiveNote >= 0) {
-              const oldNote = updatedNotes[oldActiveNote];
+              let oldNote = updatedNotes[oldActiveNote];
+              oldNote.hasNext = true; // prev note now is not the last note in a list
+              oldNote.hasPrev = oldActiveNote > 0; // not the first element
               //
               // notify prev that it is not the last one any more,
               //
               notifyTabsNoteChange("onNoteUpdate", {
-                nid: oldNote.id,
-                sid: activeSnippetId,
-                text: oldNote.text,
-                url: oldNote.url,
-                hasNext: true, // prev note now is not the last note in a list
-                hasPrev: oldActiveNote > 0  // not the first element
+                note: oldNote,
+                snippetId: activeSnippetId,
               }, false);  
             }
             //
             // Show a new snippet circle for another tab with the same URL
             //
             notifyTabsNoteChange("onNoteAdd", {
-              nid: message.note.id,
-              sid: activeSnippetId,
-              text: message.note.text,
-              url: message.note.url,
-              hasNext: !isLastNote, // not the last note in a list
-              hasPrev: updatedNotes.length > 1  // has more than 1 note in a list
+              note: message.note,
+              snippetId: activeSnippetId
             }, message.isContentScript);
           }); // update active_note_$id
         }); // update notes_$id
@@ -107,7 +102,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "SnBackground.updateNote") {
     if (!message.note) {
-      return sendResponse({ success: false, error: "There is no note attached to the message." });
+      return sendResponse({ success: false, error: "Interface error. There is no note argument attached to the message." });
     } 
     
     if (message.note.id <= 0) {
@@ -116,7 +111,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // Update note which was assigned to some snippet
     if (message.snippetId <= 0) {
-      return sendResponse({ success: false, error: "Unexpected snippet id." });
+      return sendResponse({ success: false, error: "Interface error. Unexpected snippet id." });
     }
 
     const snippetId = message.snippetId;
@@ -129,27 +124,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
       if (noteIndex === -1) {
         // Note not found
-        return sendResponse({ success: false, error: "Note not found." });
+        return sendResponse({ success: false, error: "Interface error. Note id not found." });
       }
   
       // Update the note
       // TODO: clean up notes before save on a website,
       //       (because at this place we are adding an extra fields to the note)
       notes[noteIndex] = { ...notes[noteIndex], ...message.note };
+
+      let resultNote = { ...notes[noteIndex]};
+      resultNote.hasNext = noteIndex < (notes.length - 1);
+      resultNote.hasPrev = noteIndex > 0;
   
       // Save the updated notes back to storage
       chrome.storage.sync.set({ [notesUid]: notes }, () => {
-        sendResponse({ success: true, noteId: message.note.id, snippetId: snippetId });
+        sendResponse({ success: true, note: resultNote, snippetId: snippetId });
         //
         // Notify all tabs with given URL
         //
         notifyTabsNoteChange("onNoteUpdate", {
-          nid: notes[noteIndex].id,
-          sid: snippetId,
-          text: notes[noteIndex].text,
-          url: notes[noteIndex].url,
-          hasNext: noteIndex < (notes.length - 1),
-          hasPrev: noteIndex > 0,
+          note: resultNote,
+          snippetId: snippetId,
         });
       });
     });
@@ -158,6 +153,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   if (message.action === "SnBackground.removeNote") {
+    //
+    // Note: we need note.url to find curresponding tabs
+    //       that's why it is easier to send an entire note
     if (!message.note) {
       return sendResponse({ success: false, error: "There is no note attached to the message." });
     } 
@@ -173,9 +171,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     const snippetId = message.snippetId;
     const notesUid = `notes_${snippetId}`;
-    const activeUid = `active_note_${snippetId}`;
+    const activeNoteUid = `active_note_${snippetId}`;
     // Get the existing notes from storage
-    chrome.storage.sync.get({ [notesUid]: [], [activeUid]: -1 }, (data) => {
+    chrome.storage.sync.get({ [notesUid]: [], [activeNoteUid]: -1 }, (data) => {
 
       let rmIndex = -1;
       const notes = (data[notesUid] || []).filter((note, index) => {
@@ -186,11 +184,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           return false;
         }
       });
-      const newActiveId = (message.note.id == data[activeUid]) ? -1 : data[activeUid];
-      const oldActiveId = data[activeUid];
+      const newActiveId = (message.note.id == data[activeNoteUid]) ? -1 : data[activeNoteUid];
+      const oldActiveId = data[activeNoteUid];
 
 
-      chrome.storage.sync.set({ [notesUid]: notes, [activeUid]: newActiveId }, () => {
+      chrome.storage.sync.set({ [notesUid]: notes, [activeNoteUid]: newActiveId }, () => {
         //
         // Note removed, now return result and then update all affected tabs
         //
@@ -199,28 +197,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Notify all tabs with given URL
         //
         notifyTabsNoteChange("onNoteRemove", {
-          nid: message.note.id,
-          sid: snippetId,
-          text: message.note.text,
-          url: message.note.url
+          note: message.note,
+          snippetId: snippetId
         });
 
         // 1. we still have some notes
-        // 2. check if we removed first or last index
+        // 2. check if we've removed first or last index
         //    if so, notify subling note that it need to update hasNext/hasPrev
         if (notes.length > 0  && rmIndex >= 0 && (rmIndex == 0 || rmIndex == notes.length)) {
           const updateIndex = (rmIndex == 0) ? 0 : notes.length -1;
-          const updateNote = notes[updateIndex];
+          let updateNote = { ...notes[updateIndex] };
+          updateNote.hasNext = (updateIndex < notes.length - 1);
+          updateNote.hasPrev = updateIndex > 0;
           //
           // notify prev that it is not the last one any more,
           //
           notifyTabsNoteChange("onNoteUpdate", {
-            nid: updateNote.id,
-            sid: snippetId,
-            text: updateNote.text,
-            url: updateNote.url,
-            hasNext: (updateIndex < notes.length - 1), // update note is not the last note in a list
-            hasPrev: updateIndex > 0  // and not the first element in the list
+            note: updateNote,
+            snippetId: snippetId
           }, false);  
         }
 
@@ -254,7 +248,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         activeNote = data[notesUid][activeIndex].id;
       }
       
-      sendResponse({ notes: filteredNotes, active_note: activeNote, active_snippet: activeSnippet, error: "" });
+      sendResponse({ notes: filteredNotes, activeNoteId: activeNote, snippetId: activeSnippet, error: "" });
     });
     return true;
   }
@@ -318,35 +312,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     });
     return true;
-  }
-
-  //
-  // Notify tabs about note changes
-  //
-  if (message.action === "SnBackground.broadcast") {
-    const data = message.data;
-    const sanitizedUrl = (data.url && data.url != "") ?  [sanitizeUrl(data.url)] : data.urls;
-
-    // Do nothing if there is no urls for broadcast
-    if (!sanitizedUrl || sanitizedUrl.length == 0)
-      return
-
-    chrome.tabs.query({}, function(tabs) {
-        tabs.forEach((tab) => {
-            if (tab.url) {
-                const sanitizedTabUrl = sanitizeUrl(tab.url);
-                if (sanitizedUrl.includes(sanitizedTabUrl)) {
-                    chrome.tabs.sendMessage(tab.id, {
-                        action: data.action, // onNoteUpte, onNoteRemove
-                        nid: data.nid || -1,
-                        nids: data.nids || [],
-                        sid: data.sid || -1,
-                        text: data.text || ""
-                    });
-                }
-            }
-        });
-    });
   }
 
   if (message.action == "SnBackground.openSiblingNoteInCurrentTab") {
@@ -414,6 +379,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             // Update the current active tab with the new URL
             sendResponse({ success: true, message: "Tab update request send" });
 
+            console.log("GOT TABS !!!!", tabs);
             //
             // Work-around for navigate the same url except hash
             //
@@ -422,8 +388,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               // Notify current tab about active change
               chrome.tabs.sendMessage(tabs[0].id, {
                 action: "onNoteSelect",
-                nid: workingNote.id,
-                sid: message.snippetId,
+                noteId: workingNote.id,
+                snippetId: message.snippetId,
               });
             }
             // Reloading current tab, need to send response first
@@ -459,8 +425,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                   // Notify current tab about active change
                   chrome.tabs.sendMessage(tabs[0].id, {
                     action: "onNoteSelect",
-                    nid: message.noteId,
-                    sid: message.snippetId,
+                    noteId: message.noteId,
+                    snippetId: message.snippetId,
                   });
                 }
 
@@ -504,11 +470,9 @@ function sanitizeUrl(url) {
 }
 
 function notifyTabsNoteChange(action, data, excludeCurrentTab = false) {
-    const sanitizedUrl = sanitizeUrl(data.url);
-
-    console.log("NOTIFY TAB CHANGE");
-    // Do nothing if there is no urls for broadcast
-    if (!sanitizedUrl || sanitizedUrl == "")
+    const sanitizedNoteUrl = sanitizeUrl(data.note.url);
+    // Do nothing if there is no urls for notification
+    if (!sanitizedNoteUrl || sanitizedNoteUrl == "")
       return
     try {
     chrome.tabs.query({}, function(tabs) {
@@ -518,17 +482,19 @@ function notifyTabsNoteChange(action, data, excludeCurrentTab = false) {
             if (excludeCurrentTab && tab.active && tab.highlighted) {
               return;
             }
+            //
+            // skip muted tabs
+            //
+            if (tab.mutedInfo.muted) {
+              return;
+            }
             if (tab.url) {
                 const sanitizedTabUrl = sanitizeUrl(tab.url);
-                if (sanitizedUrl.includes(sanitizedTabUrl)) {
+                if (sanitizedNoteUrl.includes(sanitizedTabUrl)) {
                     chrome.tabs.sendMessage(tab.id, {
                       action: action, // onNoteUpdate, onNoteRemove
-                      nid: data.nid,
-                      sid: data.sid,
-                      text: data.text,
-                      url: data.url,
-                      hasNext: data.hasNext,
-                      hasPrev: data.hasPrev
+                      note: data.note,
+                      snippetId: data.snippetId
                     });
                 }
             }
@@ -539,8 +505,7 @@ function notifyTabsNoteChange(action, data, excludeCurrentTab = false) {
     });
   } catch (error) {
     console.error('WRONG TABS ??? ?Unexpected error:', error);
-}
-    console.log("NOTIFY TAB CHANGE COMPLETE");
+  }
 }
 
 //
@@ -571,8 +536,8 @@ function notifyTabsSnippetRemove(snId, notes) {
             if (uniqueSanitizedUrls.includes(sanitizedTabUrl)) {
                 chrome.tabs.sendMessage(tab.id, {
                     action: "onSnippetRemove",
-                    nids: noteIds,
-                    sid: snId
+                    noteIdList: noteIds,
+                    snippetId: snId
                 });
             }
         }
