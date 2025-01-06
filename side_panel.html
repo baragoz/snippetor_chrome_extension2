@@ -5,28 +5,59 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub Notes</title>
+  <!-- HEADER PART -->
   <style>
     body {
       font-family: Arial, sans-serif;
-      padding: 10px;
-      background-color: #f4f4f4;
-      /* Light background for better contrast */
+      margin: 0;
+      padding: 0;
+      background-color: #F0FDFD;
     }
 
-    #dw-toolbar {
-      display: block;
-      justify-content: space-between;
+    .sn-header {
+      display: flex;
       align-items: center;
-      margin-bottom: 10px;
-      padding: 16px;
-      padding-bottom: 0;
+      justify-content: space-between;
+      height: 60px;
+      background-color: #E8F0FE;
+      color: #333;
+      padding: 0 15px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
     }
 
-    #dw-dark-mode-toggle {
-      display: block;
-      position: absolute;
-      top: 10px;
-      right: 10px;
+    .sn-header .sn-back-button {
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center
+    }
+
+    .sn-header .sn-title {
+      flex: 1;
+      text-align: center;
+      font-size: 18px;
+      font-weight: bold;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sn-header .sn-icon-space {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sn-header .sn-icon-space svg {
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+    }
+  </style>
+  <style>
+
+    #dw-main-container {
+      padding: 16px;
     }
 
     #dw-snippet-controls {
@@ -50,77 +81,6 @@
       /* Hide overflowing text */
       text-overflow: ellipsis;
       /* Show '...' if text is too long */
-    }
-
-    /* DROPDOWN START */
-    .sn-dropdown {
-      position: relative;
-      display: inline-block;
-      min-width: fit-content;
-    }
-
-    .sn-dropdown>button {
-      background-color: #F6F8Fa;
-      color: #25292e;
-      border: 1px solid #d1d9e0;
-      box-shadow: 0px 1px 0px 0px #1f23280a;
-      border-radius: 6px;
-      padding: 8px 16px;
-      /* Smaller padding for a smaller button */
-      font-size: 14px;
-      /* Smaller font size */
-      cursor: pointer;
-      transition: background-color 0.2s ease, border-color 0.2s ease;
-    }
-
-    .sn-dropdown>button:hover {
-      background-color: #eff2f5;
-      border-color: #d1d9e0;
-      opacity: 0.9;
-    }
-
-    .sn-dropdown>button:active {
-      background-color: #e6eaef;
-      border-color: #d1d9e0;
-    }
-
-    .sn-dropdown-content {
-      display: none;
-      position: absolute;
-      background-color: #ffffff;
-      min-width: 200px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      z-index: 1;
-      border-radius: 4px;
-      margin-top: 4px;
-      padding: 8px 0;
-      border: 1px solid #ddd;
-    }
-
-    .sn-dropdown-content a {
-      color: #212529;
-      padding: 8px 12px;
-      /* Slightly reduced padding */
-      text-decoration: none;
-      display: flex;
-      align-items: center;
-      font-size: 12px;
-      /* Smaller font size */
-      transition: background-color 0.2s ease, color 0.2s ease;
-    }
-
-    .sn-dropdown-content a:hover {
-      background-color: #f8f9fa;
-      color: #0056b3;
-    }
-
-    .sn-dropdown:hover .sn-dropdown-content {
-      display: block;
-    }
-
-    .sn-divider {
-      border-top: 1px solid #e9ecef;
-      margin: 8px 0;
     }
 
     /* DROPDOWN END */
@@ -375,20 +335,34 @@
 
     #dw-note-list {
       max-height: calc(100vh - 250px);
-      overflow-y: scroll;
+      overflow-y: auto;
       padding-right: 16px;
     }
 
-    .sn-snippet-mode #dw-snippet-controls {
-      display: none;
-    }
-
-    .sn-snippet-mode #dw-snippet-list {
-      display: flex;
-    }
-
+    .sn-snippet-mode .sn-divider,
+    .sn-snippet-mode #dw-snippet-controls,
+    .sn-snippet-mode #dw-navigation-buttons,
+    .sn-snippet-mode #dw-branch-toggle,
     .sn-snippet-mode #dw-note-list {
       display: none;
+    }
+
+    .sn-snippet-mode #dw-back-button,
+    .sn-snippet-mode #dw-title,
+    .sn-snippet-mode #dw-icon-space {
+      display: none;
+    }
+
+    #dw-snippet-list,
+    #dw-snippets-icon,
+    #dw-snippets-title {
+      display: none;
+    }
+
+    .sn-snippet-mode #dw-snippet-list,
+    .sn-snippet-mode #dw-snippets-icon,
+    .sn-snippet-mode #dw-snippets-title {
+      display: flex;
     }
 
     #dw-snippet-list-wrapper {
@@ -447,33 +421,36 @@
 </head>
 
 <body>
+  <div id="dw-header" class="sn-header">
+    <div id="dw-back-button" class="sn-back-button">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg>
+       Snippets
+    </div>
+    <div id="dw-title" class="sn-title">Working Snippet</div>
+    <div id="dw-icon-space" class="sn-icon-space">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <title>Unpin snippet from current tab</title>
+        <path d="M680-840v80h-40v327l-80-80v-247H400v87l-87-87-33-33v-47h400ZM480-40l-40-40v-240H240v-80l80-80v-46L56-792l56-56 736 736-58 56-264-264h-6v240l-40 40ZM354-400h92l-44-44-2-2-46 46Zm126-193Zm-78 149Z"/>
+      </svg>
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <title>Show all pinned tabs</title>
+        <path d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/>
+      </svg>
+    </div>
+    <div id="dw-snippets-title" class="sn-title">List of Snippets</div>
+    <div id="dw-snippets-icon" class="sn-icon-space">
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <title>Actions</title>
+        <path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/>
+      </svg>
+    </div>
+  </div>
+
   <div id="dw-main-container" class="sn-snippet-mode">
     <div id="dw-toolbar">
-      <div id="dw-top-level-toolbar">
-        <!-- Snippets File-like menu -->
-        <div class="sn-dropdown">
-          <button>Snippets ▼</button>
-          <div class="sn-dropdown-content">
-            <a href="#" id="dw-new-snippet" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px"
-                viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-                <path
-                  d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
-              </svg> New</a>
-            <div class="sn-divider"></div>
-            <!-- add snippet list here -->
-          </div>
-        </div>
-        <!-- Dark Mode Toggle -->
-        <div id="dw-dark-mode-toggle">
-          <span>Dark Mode</span>
-          <input type="checkbox" id="dw-dark-toggle">
-        </div>
-      </div>
-      <!-- div class="sn-divider"></div -->
-
       <!-- Snippet Controls -->
       <div id="dw-snippet-controls">
-        <span id="dw-current-snippet-title">Snippet title</span>
+        <span id="dw-current-snippet-title" title="Edit snippet title">Snippet title</span>
         <button id="dw-save-snippet" title="Go to save page" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg"
             height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
             <path

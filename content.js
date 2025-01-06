@@ -465,7 +465,8 @@ class SnippetorContainer {
       url: window.location.href,
       text: text.trim(),
       defaultBranch: this.note.defaultBranch,
-      blob: this.note.blob
+      blob: this.note.blob,
+      currentBranch: this.note.currentBranch,
     };
 
     // Send a message to the background script to save the note
@@ -807,7 +808,7 @@ class GitHubContentParser {
                     line: parsedLineNumber,
                     defaultBranch: jsonData.payload.repo.defaultBranch,
                     currentBranch: currentBranch,
-                    currentOid: jsonData.payload.refInfo.currentOid
+                    blob: jsonData.payload.refInfo.currentOid
                 };
             }
         } catch (error) {
@@ -899,14 +900,14 @@ class GoogleCodeParser {
       }
     }
     // line number element point to a-tag, which contain href with url path     
-    let oid = this.getDrcFromPath(lineNumberElement.href);
+    let drc = this.getDrcFromPath(lineNumberElement.href);
 
     return {
       git: "codesearch",  // Google's code search
       project: project,   // chromium
       path: path,         // path to file
       line: parsedLineNumber, // line number from ui
-      currentOid: oid,    // oid from ui
+      blob: drc,    // drc from ui
       currentBranch: branch, // branch from url 
       defaultBranch: "main" // default branch is always main
     }

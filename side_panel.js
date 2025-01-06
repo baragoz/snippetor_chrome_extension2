@@ -2,10 +2,14 @@
 
 class SnippetManager {
   constructor() {
-      this.noteList = document.getElementById("dw-note-list");
-      this.currentSnippetTitle = document.getElementById("dw-current-snippet-title");
+
+      this.headerContainer = document.getElementById("dw-header");
       this.mainContainer = document.getElementById("dw-main-container");
       this.mainSnippetList = document.getElementById("dw-snippet-list-wrapper");
+
+      this.noteList = document.getElementById("dw-note-list");
+      this.currentSnippetTitle = document.getElementById("dw-current-snippet-title");
+
       this.currentSnippetId = null;
       this.activeNote = -1;
 
@@ -18,6 +22,8 @@ class SnippetManager {
           arrowDownIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"/></svg>',
           arrowUpIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg>',
           newIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>',
+          keepIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="m640-480 80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280Zm-286 80h252l-46-46v-314H400v314l-46 46Zm126 0Z"/></svg>',
+          keepOffIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M680-840v80h-40v327l-80-80v-247H400v87l-87-87-33-33v-47h400ZM480-40l-40-40v-240H240v-80l80-80v-46L56-792l56-56 736 736-58 56-264-264h-6v240l-40 40ZM354-400h92l-44-44-2-2-46 46Zm126-193Zm-78 149Z"/></svg>',
       };
 
       this.init();
@@ -30,6 +36,7 @@ class SnippetManager {
       document.getElementById("dw-remove-snippet").addEventListener("click", () => this.removeSnippet());
       document.getElementById("dw-notes-prev").addEventListener("click", () => this.handlePrevNote());
       document.getElementById("dw-notes-next").addEventListener("click", () => this.handleNextNote());
+      document.getElementById("dw-back-button").addEventListener("click", () => this.handleBackButton());
 
       this.currentSnippetTitle.addEventListener("blur", () => this.updateSnippetTitle());
 
@@ -62,6 +69,11 @@ class SnippetManager {
       });
   }
 
+  handleBackButton() {
+    this.mainContainer.classList.add("sn-snippet-mode");
+    this.headerContainer.classList.add("sn-snippet-mode");
+  }
+
   //
   // Just update UI elements:
   // -- add/remove class for active note
@@ -82,7 +94,7 @@ class SnippetManager {
 
   renderSnippets() {
       chrome.storage.sync.get({ snippets: [], active_snippet: -1 }, (data) => {
-          const snippetsDropdown = document.querySelector(".sn-dropdown-content");
+          const snippetsDropdown = document.querySelector("#dw-snippet-list-wrapper");
           snippetsDropdown.innerHTML = `
               <a href="#" id="dw-new-snippet" class="sn-button">${this.icons.newIcon}New</a>
               <div class="sn-divider"></div>
@@ -113,6 +125,8 @@ class SnippetManager {
             this.loadSnippet(active);
           } else {
             this.mainContainer.classList.add("sn-snippet-mode");
+            this.headerContainer.classList.add("sn-snippet-mode");
+            
             // add new button
             this.mainSnippetList.innerHTML = `
               <a href="#" id="dw-main-new-snippet" class="sn-button">${this.icons.newIcon}New</a>
@@ -147,6 +161,7 @@ class SnippetManager {
       this.currentSnippetTitle.textContent = snippet.title;
 
       this.mainContainer.classList.remove("sn-snippet-mode");
+      this.headerContainer.classList.remove("sn-snippet-mode");
 
       const notesUid = `notes_${this.currentSnippetId}`;
       const activeNoteUid = `active_note_${this.currentSnippetId}`;
@@ -319,6 +334,7 @@ updateNoteText(note, text) {
 
       this.currentSnippetTitle.textContent = "";
       this.mainContainer.classList.add("sn-snippet-mode");
+      this.headerContainer.classList.add("sn-snippet-mode");
       //
       // UI updata should happen on callbacks
       //
