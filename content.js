@@ -763,8 +763,10 @@ class GitHubContentParser {
   }
 
   getDefaultBranchAndBlob(lineNumberElement) {
+    // Get line number from element
     let lineNumberString = lineNumberElement.getAttribute('data-line-number');
     let parsedLineNumber = parseInt(lineNumberString, 10);
+    // split path by "/"
     let pth = window.location.pathname.split("/");
     let project = "";
     let oid = "";
@@ -869,6 +871,11 @@ class GoogleCodeParser {
     return document.querySelectorAll("div.CodeMirror > .line-numbers > div.line-number > a");
   }
 
+  getDrcFromPath(path) {
+    const data = path.match(/drc=([^;]+)/);
+    return data ? data[0] : "";
+  }
+
   getDefaultBranchAndBlob(lineNumberElement) {
     let lineNumberString = lineNumberElement.getAttribute('data-line-number');
     let parsedLineNumber = parseInt(lineNumberString, 10);
@@ -891,15 +898,17 @@ class GoogleCodeParser {
         path = tmp2[1];
       }
     }
-     
-    let oid = "";
+    // line number element point to a-tag, which contain href with url path     
+    let oid = this.getDrcFromPath(lineNumberElement.href);
 
     return {
-      git: "codesearch",
-      project: project,
-      currentOid: oid,
-      currentBranch: branch,
-      defaultBranch: "main"
+      git: "codesearch",  // Google's code search
+      project: project,   // chromium
+      path: path,         // path to file
+      line: parsedLineNumber, // line number from ui
+      currentOid: oid,    // oid from ui
+      currentBranch: branch, // branch from url 
+      defaultBranch: "main" // default branch is always main
     }
   }
 
