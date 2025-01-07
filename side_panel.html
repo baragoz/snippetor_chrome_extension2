@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub Notes</title>
   <!-- HEADER PART -->
-  <style>
+  <!-- style>
     body {
       font-family: Arial, sans-serif;
       margin: 0;
@@ -53,10 +53,14 @@
       height: 24px;
       cursor: pointer;
     }
-  </style>
+  </style -->
   <style>
     #dw-main-container {
       padding: 16px;
+      border: 1px solid #373F51;
+      border-top: 0px;
+      border-bottom-right-radius: 17px;
+      border-bottom-left-radius: 17px;
     }
 
     #dw-snippet-controls {
@@ -502,10 +506,116 @@
       opacity: 0.6;
     }
   </style>
+
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #F0FDFD;
+  }
+
+  .sn-header {
+    width: calc(100% - 8px);
+    display: flex;
+    align-items: stretch; /* Ensure tabs take full height */
+    height: 36px;
+    background-color: #373F51;
+    padding-top: 12px;
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .sn-tabs {
+    display: contents;
+    width: calc(100% - 8px);
+  }
+
+  .sn-tab {
+    width: 100%;
+    flex: 1; /* Make tabs equal width */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s, color 0.3s, border-radius 0.3s;
+    border: 1px solid transparent;
+    height: 100%; /* Ensure tabs take full height of header */
+    border-top-right-radius: 17px;
+    border-top-left-radius: 17px;
+  }
+
+  /* Default state */
+  .sn-tab.default {
+    background-color: #373F51;
+    color: #FAFEFE;
+    border: 1px solid #A0AAB4;
+  }
+
+  /* Hover state */
+  .sn-tab:hover:not(.disabled):not(.active) {
+    background-color: #5C6784;
+    color: #F0FDFD;
+  }
+
+  /* Active state */
+  .sn-tab.active {
+    background-color: #F0FDFD;
+    color: #000;
+    z-index: 2;
+  }
+
+  /* Sibling tabs (non-active) */
+  .sn-tab.default:not(.active) {
+    border-top-left-radius: 17px;
+    border-top-right-radius: 17px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+
+  /* Disabled state */
+  .sn-tab.disabled {
+    background-color: #F0F0F0;
+    color: #999;
+    cursor: not-allowed;
+    border: 1px solid #DDD;
+    border-radius: 10px; /* Keep consistent with others */
+  }
+
+  .sn-svg {
+    right: 17px;
+  }
+</style>
 </head>
 
 <body>
   <div id="dw-header" class="sn-header">
+    <div class="sn-tabs">
+      <div id="dw-tab-snippets" class="sn-tab default" data="snippets">Snippets
+        <div class="sn-svg">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#fafefe"><path d="M240-280h240v-80H240v80Zm120-160h240v-80H360v80Zm120-160h240v-80H480v80ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+        </div>
+
+      </div>
+      <div id="dw-tab-active" class="sn-tab active" data="active">Active
+        <div class="sn-svg">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#373F51"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+        </div>
+      </div>
+      <div id="dw-tab-pinned" class="sn-tab default" data="pinned">Pinned
+        <div class="sn-svg">
+        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#FAFEFE">
+          <path d="M640-480l80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280ZM400-680h160v280H400v-280Z"/>
+        </svg>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- div id="dw-header" class="sn-header">
     <div id="dw-back-button" class="sn-back-button">
       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
         <path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z" />
@@ -535,7 +645,7 @@
           d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z" />
       </svg>
     </div>
-  </div>
+  </div -->
 
   <div id="dw-tab-list">
     <!-- Header 

@@ -42,9 +42,12 @@ class SnippetManager {
       document.getElementById("dw-notes-prev").addEventListener("click", () => this.handlePrevNote());
       document.getElementById("dw-notes-next").addEventListener("click", () => this.handleNextNote());
 
+      document.querySelector("#dw-tab-snippets").addEventListener("click", (evt) => this.handleTabClick("snippets"));
+      document.querySelector("#dw-tab-active").addEventListener("click", (evt) => this.handleTabClick("active"));
+      document.querySelector("#dw-tab-pinned").addEventListener("click", (evt) => this.handleTabClick("pinned"));
       // Header - back - fwd buttons
-      document.getElementById("dw-back-button").addEventListener("click", () => this.handleBackButton());
-      document.getElementById("dw-show-tabs").addEventListener("click", () => this.toggleShowTabs());
+      //document.getElementById("dw-back-button").addEventListener("click", () => this.handleBackButton());
+      //document.getElementById("dw-show-tabs").addEventListener("click", () => this.toggleShowTabs());
 
       // Snippet title edit
       this.currentSnippetTitle.addEventListener("blur", () => this.updateSnippetTitle());
@@ -53,6 +56,32 @@ class SnippetManager {
       this.renderSnippets();
   }
 
+  handleTabClick(action) {
+    const listOfTabs = [
+      document.querySelector("#dw-tab-snippets"),
+      document.querySelector("#dw-tab-active"),
+      document.querySelector("#dw-tab-pinned"),
+    ];
+  
+    // Loop through each tab and update classes
+    listOfTabs.forEach((tab) => {
+      tab.classList.remove("active");
+      tab.classList.add("default");
+    });
+
+    let elem = document.querySelector("#dw-tab-" + action);
+  
+    // Update the clicked tab's classes
+    elem.classList.add("active");
+    elem.classList.remove("default");
+
+    if (action == "snippets") {
+        this.mainContainer.classList.add("sn-snippet-mode");
+    }
+    else {
+        this.mainContainer.classList.remove("sn-snippet-mode");
+    }
+  }
 
   toggleShowTabs(forceShow) {
     var shouldShow = forceShow;
@@ -186,7 +215,7 @@ class SnippetManager {
       this.currentSnippetTitle.textContent = snippet.title;
 
       this.mainContainer.classList.remove("sn-snippet-mode");
-      this.headerContainer.classList.remove("sn-snippet-mode");
+      this.handleTabClick("active");
 
       const notesUid = `notes_${this.currentSnippetId}`;
       const activeNoteUid = `active_note_${this.currentSnippetId}`;
