@@ -546,6 +546,7 @@
     height: 100%; /* Ensure tabs take full height of header */
     border-top-right-radius: 17px;
     border-top-left-radius: 17px;
+    position: relative;
   }
 
   /* Default state */
@@ -568,6 +569,10 @@
     z-index: 2;
   }
 
+  .sn-tab.active svg {
+    fill: #373F51;
+  }
+
   /* Sibling tabs (non-active) */
   .sn-tab.default:not(.active) {
     border-top-left-radius: 17px;
@@ -586,6 +591,7 @@
   }
 
   .sn-svg {
+    position:absolute;
     right: 17px;
   }
 </style>
