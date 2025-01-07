@@ -55,7 +55,6 @@
     }
   </style>
   <style>
-
     #dw-main-container {
       padding: 16px;
     }
@@ -416,35 +415,174 @@
       border-left: 1px solid transparent;
       /* For consistent borders */
     }
-  </style>
 
+    /* show/hide tabs */
+    #dw-tab-list {
+      display: none;
+    }
+    #dw-tab-list.sn-show-tabs {
+      display: block;
+    }
+  </style>
+  <style>
+    /* Table-specific styles */
+    #dw-tab-list {
+      max-width: 1200px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .sn-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 20px;
+      border-bottom: 1px solid #eaeaea;
+      transition: background-color 0.3s;
+    }
+
+    .sn-row:hover {
+      background-color: #f0f8ff;
+    }
+
+    .sn-row.sn-active {
+      background-color: #d8eafd;
+      font-weight: bold;
+    }
+
+    .sn-row>div {
+      flex: 1;
+      text-align: center;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .sn-url {
+      text-align: left;
+      word-wrap: break-word;
+      overflow: hidden;
+      white-space: normal;
+      max-height: 3.5em;
+      line-height: 1.2em;
+    }
+
+    .sn-url a {
+      color: #007bff;
+      text-decoration: none;
+    }
+
+    .sn-url a:hover {
+      text-decoration: underline;
+    }
+
+    .sn-icon {
+      position: relative;
+    }
+
+    .sn-icon .sn-badge {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff5722;
+      color: white;
+      font-size: 10px;
+      border-radius: 50%;
+      padding: 2px 6px;
+    }
+
+    .sn-open-icon {
+      font-size: 18px;
+      color: #4caf50;
+    }
+
+    .sn-suspended {
+      opacity: 0.6;
+    }
+  </style>
 </head>
 
 <body>
   <div id="dw-header" class="sn-header">
     <div id="dw-back-button" class="sn-back-button">
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z"/></svg>
-       Snippets
+      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z" />
+      </svg>
+      Snippets
     </div>
     <div id="dw-title" class="sn-title">Working Snippet</div>
     <div id="dw-icon-space" class="sn-icon-space">
       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
         <title>Unpin snippet from current tab</title>
-        <path d="M680-840v80h-40v327l-80-80v-247H400v87l-87-87-33-33v-47h400ZM480-40l-40-40v-240H240v-80l80-80v-46L56-792l56-56 736 736-58 56-264-264h-6v240l-40 40ZM354-400h92l-44-44-2-2-46 46Zm126-193Zm-78 149Z"/>
+        <path
+          d="M680-840v80h-40v327l-80-80v-247H400v87l-87-87-33-33v-47h400ZM480-40l-40-40v-240H240v-80l80-80v-46L56-792l56-56 736 736-58 56-264-264h-6v240l-40 40ZM354-400h92l-44-44-2-2-46 46Zm126-193Zm-78 149Z" />
       </svg>
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-        <title>Show all pinned tabs</title>
-        <path d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z"/>
-      </svg>
+      <div id="dw-show-tabs">
+        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+         <title>Show all pinned tabs</title>
+          <path
+            d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
+        </svg>
+      </div>
     </div>
     <div id="dw-snippets-title" class="sn-title">List of Snippets</div>
     <div id="dw-snippets-icon" class="sn-icon-space">
       <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
         <title>Actions</title>
-        <path d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z"/>
+        <path
+          d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z" />
       </svg>
     </div>
   </div>
+
+  <div id="dw-tab-list">
+    <!-- Header 
+    <div class="sn-header">
+      <div>URL</div>
+      <div>Active Index</div>
+      <div>Revision Type</div>
+      <div>Open Tab</div>
+    </div>
+  --> 
+
+    <!-- Rows -->
+    <div class="sn-row sn-active">
+      <div class="sn-url">
+        <a href="#">https://example.com/blob/abcdef7?note=example</a>
+      </div>
+      <div>1</div>
+      <div>blob (abcdef7)</div>
+      <div class="sn-icon">
+        <span class="sn-open-icon">&#128279;</span>
+      </div>
+    </div>
+
+    <div class="sn-row">
+      <div class="sn-url">
+        <a href="#">https://example.com/branch/main-feature</a>
+      </div>
+      <div>2</div>
+      <div>branch (main)</div>
+      <div class="sn-icon sn-suspended">
+        <span class="sn-open-icon">&#128279;</span>
+        <span class="sn-badge">suspended</span>
+      </div>
+    </div>
+
+    <div class="sn-row">
+      <div class="sn-url">
+        <a href="#">https://example.com/defaultBranch</a>
+      </div>
+      <div>3</div>
+      <div>master (default)</div>
+      <div class="sn-icon">
+        <span class="sn-open-icon">&#128279;</span>
+      </div>
+    </div>
+  </div>
+
 
   <div id="dw-main-container" class="sn-snippet-mode">
     <div id="dw-toolbar">

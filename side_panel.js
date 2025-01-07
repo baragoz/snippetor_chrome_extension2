@@ -4,6 +4,7 @@ class SnippetManager {
   constructor() {
 
       this.headerContainer = document.getElementById("dw-header");
+      this.tabsContainer = document.getElementById("dw-tab-list");
       this.mainContainer = document.getElementById("dw-main-container");
       this.mainSnippetList = document.getElementById("dw-snippet-list-wrapper");
 
@@ -32,16 +33,38 @@ class SnippetManager {
 
   init() {
       // Initialize event listeners
+
+      // Snippet toolbar - save/remove buttons
       document.getElementById("dw-save-snippet").addEventListener("click", () => this.saveSnippet());
       document.getElementById("dw-remove-snippet").addEventListener("click", () => this.removeSnippet());
+
+      // bottom - next/prev snippet
       document.getElementById("dw-notes-prev").addEventListener("click", () => this.handlePrevNote());
       document.getElementById("dw-notes-next").addEventListener("click", () => this.handleNextNote());
-      document.getElementById("dw-back-button").addEventListener("click", () => this.handleBackButton());
 
+      // Header - back - fwd buttons
+      document.getElementById("dw-back-button").addEventListener("click", () => this.handleBackButton());
+      document.getElementById("dw-show-tabs").addEventListener("click", () => this.toggleShowTabs());
+
+      // Snippet title edit
       this.currentSnippetTitle.addEventListener("blur", () => this.updateSnippetTitle());
 
       // Render initial snippets
       this.renderSnippets();
+  }
+
+
+  toggleShowTabs(forceShow) {
+    var shouldShow = forceShow;
+    if (forceShow === undefined) {
+      shouldShow = !this.tabsContainer.classList.contains("sn-show-tabs");
+    } 
+
+    if (shouldShow) {
+      this.tabsContainer.classList.add("sn-show-tabs");
+    } else {
+      this.tabsContainer.classList.remove("sn-show-tabs");
+    }
   }
 
   initStorageChangeListener() {
@@ -72,6 +95,8 @@ class SnippetManager {
   handleBackButton() {
     this.mainContainer.classList.add("sn-snippet-mode");
     this.headerContainer.classList.add("sn-snippet-mode");
+    // force tabs close when user back to main menu
+    this.toggleShowTabs(false);
   }
 
   //
