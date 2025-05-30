@@ -9,7 +9,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
   console.log("GitHub set panel action.");
-  
+
   //
   // snippets - list of user working or playing snippets
   // active_snippet_id - id of an active snippet
@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.storage.sync.set({ snippets: data.snippets, active_snippet: data.active_snippet, version: "1.0", tabs_map: [] }, () => {
       console.log("Notes storage initialized.");
     });
- });
+  });
 });
 
 //
@@ -77,21 +77,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       //
       const activeSnippetId = data.active_snippet;
       if (!activeSnippetId || activeSnippetId < 0) {
-         sendResponse({ success: false, error: "there is no active snippet." });
-         return;
+        sendResponse({ success: false, error: "there is no active snippet." });
+        return;
       }
       //
       // chrome.storage should notify all listener by default
       //
       const notesUid = `notes_${activeSnippetId}`;
       const activeNoteUid = `active_note_${activeSnippetId}`;
-    
+
       chrome.storage.sync.get({ [notesUid]: [], [activeNoteUid]: -1 }, (data) => {
         var notes = data[notesUid] || [];
 
         // adding a new note right after the oldActiveNote and make it as active note
         const oldActiveNote = data[activeNoteUid];
-        const newActiveNote = (oldActiveNote >= 0 && oldActiveNote < notes.length ) ? (oldActiveNote + 1) : notes.length;
+        const newActiveNote = (oldActiveNote >= 0 && oldActiveNote < notes.length) ? (oldActiveNote + 1) : notes.length;
 
         // update the list of notes
         var updatedNotes = [...notes];
@@ -99,16 +99,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         updatedNotes.splice(newActiveNote, 0, message.note);
 
 
-      const isLastNote = newActiveNote >= (updatedNotes.length - 1);
+        const isLastNote = newActiveNote >= (updatedNotes.length - 1);
 
-      message.note.hasNext = !isLastNote;
-      message.note.hasPrev = updatedNotes.length > 1;
+        message.note.hasNext = !isLastNote;
+        message.note.hasPrev = updatedNotes.length > 1;
 
-      console.log("DEBUG UPDATE NOTEs");
+        console.log("DEBUG UPDATE NOTEs");
         // Note: please, do not join these 2 updates
-        chrome.storage.sync.set({ [notesUid]: updatedNotes}, () => {
+        chrome.storage.sync.set({ [notesUid]: updatedNotes }, () => {
           console.log("DEBUG UPDATE NOTEs DONE");
-          chrome.storage.sync.set({ [activeNoteUid]: newActiveNote}, () => {
+          chrome.storage.sync.set({ [activeNoteUid]: newActiveNote }, () => {
             console.log("DEBUG UPDATE ACTIVE NOTE DONE");
             sendResponse({
               success: true,
@@ -127,7 +127,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
               notifyTabsNoteChange("onNoteUpdate", {
                 note: oldNote,
                 snippetId: activeSnippetId,
-              }, false);  
+              }, false);
             }
             //
             // Show a new snippet circle for another tab with the same URL
@@ -146,8 +146,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "SnBackground.updateNote") {
     if (!message.note) {
       return sendResponse({ success: false, error: "Interface error. There is no note argument attached to the message." });
-    } 
-    
+    }
+
     if (message.note.id <= 0) {
       return sendResponse({ success: false, error: "Unexpected note id." });
     }
@@ -164,21 +164,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       var notes = data[notesUid] || [];
       // Find the index of the note to be updated
       const noteIndex = notes.findIndex((note) => note.id === message.note.id);
-  
+
       if (noteIndex === -1) {
         // Note not found
         return sendResponse({ success: false, error: "Interface error. Note id not found." });
       }
-  
+
       // Update the note
       // TODO: clean up notes before save on a website,
       //       (because at this place we are adding an extra fields to the note)
       notes[noteIndex] = { ...notes[noteIndex], ...message.note };
 
-      let resultNote = { ...notes[noteIndex]};
+      let resultNote = { ...notes[noteIndex] };
       resultNote.hasNext = noteIndex < (notes.length - 1);
       resultNote.hasPrev = noteIndex > 0;
-  
+
       // Save the updated notes back to storage
       chrome.storage.sync.set({ [notesUid]: notes }, () => {
         sendResponse({ success: true, note: resultNote, snippetId: snippetId });
@@ -191,7 +191,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       });
     });
-  
+
     return true;
   }
 
@@ -201,8 +201,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     //       that's why it is easier to send an entire note
     if (!message.note) {
       return sendResponse({ success: false, error: "There is no note attached to the message." });
-    } 
-    
+    }
+
     if (message.note.id === undefined || message.note.id <= 0) {
       return sendResponse({ success: false, error: "Invalid note id." });
     }
@@ -235,7 +235,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         //
         // Note removed, now return result and then update all affected tabs
         //
-        sendResponse({ success: true }); 
+        sendResponse({ success: true });
         //
         // Notify all tabs with given URL
         //
@@ -247,8 +247,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // 1. we still have some notes
         // 2. check if we've removed first or last index
         //    if so, notify subling note that it need to update hasNext/hasPrev
-        if (notes.length > 0  && rmIndex >= 0 && (rmIndex == 0 || rmIndex == notes.length)) {
-          const updateIndex = (rmIndex == 0) ? 0 : notes.length -1;
+        if (notes.length > 0 && rmIndex >= 0 && (rmIndex == 0 || rmIndex == notes.length)) {
+          const updateIndex = (rmIndex == 0) ? 0 : notes.length - 1;
           let updateNote = { ...notes[updateIndex] };
           updateNote.hasNext = (updateIndex < notes.length - 1);
           updateNote.hasPrev = updateIndex > 0;
@@ -258,15 +258,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           notifyTabsNoteChange("onNoteUpdate", {
             note: updateNote,
             snippetId: snippetId
-          }, false);  
+          }, false);
         }
 
-        });
+      });
     });
 
     return true;
   }
-  
+
 
   if (message.action === "SnBackground.getNotesForUrl") {
     // get active snippet first
@@ -285,7 +285,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (index >= 0) {
         let tab = tabsMap[index];
         console.log("TAB IS TAB :", tab);
-        isReady =  (tab.state == "pinned");
+        isReady = (tab.state == "pinned");
         if (isReady) {
           currentSnippet = tab.snippetId;
           currentNote = tab.activeNote;
@@ -302,8 +302,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const notesUid = `notes_${currentSnippet}`;
       const activeNoteUid = `active_note_${currentSnippet}`;
 
-      console.log("LOOKING FOR : " + notesUid );
-      
+      console.log("LOOKING FOR : " + notesUid);
+
       //
       // Read current snippet
       //
@@ -318,16 +318,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             return noteUrl == sanitizedUrl;
           });
         }
-  
+
         var activeNoteId = -1;
-        const activeIndex = (!isReady && hasActiveSnippet) ?  data[activeNoteUid] : currentNote;
+        const activeIndex = (!isReady && hasActiveSnippet) ? data[activeNoteUid] : currentNote;
         if (activeIndex >= 0 && activeIndex < data[notesUid].length) {
           activeNoteId = data[notesUid][activeIndex].id;
         }
-        
+
         sendResponse({ notes: filteredNotes, activeNoteId: activeNoteId, snippetId: currentSnippet, error: "" });
       });
-  
+
     });
     return true;
   }
@@ -339,7 +339,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       activeSnippet = "";
     }
     // save snippet to the load storage to reload it on reboot
-    chrome.storage.sync.set( {active_snippet: message.snippetId});
+    chrome.storage.sync.set({ active_snippet: message.snippetId });
     sendResponse({ success: true });
     return true;
   }
@@ -384,7 +384,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Remove the list of notes and active note id
         // for the removed snippet
         //
-        chrome.storage.sync.remove( [rmActiveNoteUid, rmNotesId], () => {
+        chrome.storage.sync.remove([rmActiveNoteUid, rmNotesId], () => {
           // Notify opened tabs about removed snippet
           notifyTabsSnippetRemove(message.snippetId, rmNotes);
         });
@@ -396,8 +396,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action == "SnBackground.openSiblingNoteInCurrentTab") {
     if (!message.note) {
       return sendResponse({ success: false, error: "There is no note attached to the message." });
-    } 
-    
+    }
+
     if (message.note.id <= 0) {
       return sendResponse({ success: false, error: "Unexpected note id." });
     }
@@ -414,7 +414,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       var notes = data[notesUid] || [];
       // Find the index of the note to be updated
       let noteIndex = notes.findIndex((note) => note.id === message.note.id);
-  
+
       if (noteIndex === -1) {
         // Note not found
         sendResponse({ success: false, error: "Note not found." });
@@ -429,11 +429,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // load next note
         noteIndex++;
       } else if (message.goPrev) {
-         if (noteIndex <= 0) {
+        if (noteIndex <= 0) {
           sendResponse({ success: false, error: "There is no previous note." });
           return;
-         }
-         --noteIndex;
+        }
+        --noteIndex;
       }
 
       // now we know the next active note
@@ -468,7 +468,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (shouldUpdateActive) {
         // Update an active note
         const activeUid = `active_note_${message.snippetId}`;
-        chrome.storage.sync.set({ [activeUid]: noteIndex });      
+        chrome.storage.sync.set({ [activeUid]: noteIndex });
 
       }
 
@@ -478,30 +478,30 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       // load next note in the current tab
       chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         if (tabs.length > 0) {
-            // Update the current active tab with the new URL
-            sendResponse({ success: true, message: "Tab update request send" });
+          // Update the current active tab with the new URL
+          sendResponse({ success: true, message: "Tab update request send" });
 
-            console.log("GOT TABS !!!!", tabs);
-            //
-            // Work-around for navigate the same url except hash
-            //
-            const tabUrl = this.sanitizeUrl(tabs[0].url);
-            if (sanitizedUrl === tabUrl) {
-              // Notify current tab about active change
-              chrome.tabs.sendMessage(tabs[0].id, {
-                action: "onNoteSelect",
-                noteId: workingNote.id,
-                snippetId: message.snippetId,
-              });
-            }
-            // Reloading current tab, need to send response first
-            chrome.tabs.update(tabs[0].id, { url: url }, () => {
-                console.log(`Tab updated to URL: ${url}`);
-                // sendResponse({ status: "success", message: "Tab updated successfully" });
+          console.log("GOT TABS !!!!", tabs);
+          //
+          // Work-around for navigate the same url except hash
+          //
+          const tabUrl = this.sanitizeUrl(tabs[0].url);
+          if (sanitizedUrl === tabUrl) {
+            // Notify current tab about active change
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "onNoteSelect",
+              noteId: workingNote.id,
+              snippetId: message.snippetId,
             });
+          }
+          // Reloading current tab, need to send response first
+          chrome.tabs.update(tabs[0].id, { url: url }, () => {
+            console.log(`Tab updated to URL: ${url}`);
+            // sendResponse({ status: "success", message: "Tab updated successfully" });
+          });
         } else {
-            console.error("No active tab found");
-            sendResponse({ status: "error", message: "No active tab found" });
+          console.error("No active tab found");
+          sendResponse({ status: "error", message: "No active tab found" });
         }
       });
     });
@@ -511,44 +511,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === "SnBackground.openNoteInCurrentTab") {
     const url = message.url; // Extract the URL from the message
     if (url) {
-        const sanitizedUrl = this.sanitizeUrl(url);
-        // Query the active tab in the current window
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            if (tabs.length > 0) {
+      const sanitizedUrl = this.sanitizeUrl(url);
+      // Query the active tab in the current window
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs.length > 0) {
 
-                const tabURL = this.sanitizeUrl(tabs[0].url);
+          const tabURL = this.sanitizeUrl(tabs[0].url);
 
-                console.log("TAB URL IS", [tabURL, sanitizedUrl]);
-                //
-                //  Use-case  when we switch between the same url
-                //  URL#L20  -> URL#L60
-                //
-                if (sanitizedUrl == tabURL) {
-                  // Notify current tab about active change
-                  chrome.tabs.sendMessage(tabs[0].id, {
-                    action: "onNoteSelect",
-                    noteId: message.noteId,
-                    snippetId: message.snippetId,
-                  });
-                }
+          console.log("TAB URL IS", [tabURL, sanitizedUrl]);
+          //
+          //  Use-case  when we switch between the same url
+          //  URL#L20  -> URL#L60
+          //
+          if (sanitizedUrl == tabURL) {
+            // Notify current tab about active change
+            chrome.tabs.sendMessage(tabs[0].id, {
+              action: "onNoteSelect",
+              noteId: message.noteId,
+              snippetId: message.snippetId,
+            });
+          }
 
-                // Update the current active tab with the new URL
-                chrome.tabs.update(tabs[0].id, { url: url }, () => {
-                  
-                    console.log(`Tab updated to URL: ${url}`);
+          // Update the current active tab with the new URL
+          chrome.tabs.update(tabs[0].id, { url: url }, () => {
 
-                    // Send RESPONSE TO THE SIDE PANEL 
-                    sendResponse({ status: "success", message: "Tab updated successfully" });
+            console.log(`Tab updated to URL: ${url}`);
 
-                });
-            } else {
-                console.error("No active tab found");
-                sendResponse({ status: "error", message: "No active tab found" });
-            }
-        });
+            // Send RESPONSE TO THE SIDE PANEL 
+            sendResponse({ status: "success", message: "Tab updated successfully" });
+
+          });
+        } else {
+          console.error("No active tab found");
+          sendResponse({ status: "error", message: "No active tab found" });
+        }
+      });
     } else {
-        console.error("URL not provided in the message");
-        sendResponse({ success: false, status: "error", message: "URL is missing" });
+      console.error("URL not provided in the message");
+      sendResponse({ success: false, status: "error", message: "URL is missing" });
     }
     // Indicate that the response will be sent asynchronously
     return true;
@@ -562,22 +562,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       if (tab) {
         // Send response with the new tab ID
         sendResponse({ success: true, tabId: tab.id });
-        
+
         //
         // Make a new pair tabId + snippetId to open url with data
         // 
         chrome.storage.sync.get({ tabs_map: [] }, (data) => {
-          const val = { 
+          const val = {
             snippetId: message.snippetId,
             tabId: tab.id,
             state: "pinned",
             refs: message.refs || "fixed", // Use fixed references on navigation
-            activeNote: 0 };
+            activeNote: 0
+          };
 
-            data.tabs_map.push(val);
-            chrome.storage.sync.set({ tabs_map: data.tabs_map }, () => {
-              chrome.tabs.update(tab.id, { url: message.url });
-            });
+          data.tabs_map.push(val);
+          chrome.storage.sync.set({ tabs_map: data.tabs_map }, () => {
+            chrome.tabs.update(tab.id, { url: message.url });
+          });
         });
       }
       else {
@@ -594,7 +595,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs.length > 0) {
         chrome.tabs.reload(tabs[0].id, {}, () => {
-          sendResponse({ success: true, tabId: tabs[0].id});
+          sendResponse({ success: true, tabId: tabs[0].id });
         });
       }
     });
@@ -603,26 +604,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.action === "SnBackground.pinCurrentTab") {
     if (!message.snippetId) {
-      sendResponse({ success: false, error: "Invalid argument snippet id"});
+      sendResponse({ success: false, error: "Invalid argument snippet id" });
       return;
     }
 
     // 
     if (message.activeNote == undefined)
-      message.activeNote =  -1;
+      message.activeNote = -1;
 
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       console.log("PIN TAB 2");
       if (tabs.length > 0) {
         let id = tabs[0].id;  // current tab id
-        sendResponse({ success: true, tab_id: id});
+        sendResponse({ success: true, tab_id: id });
         console.log("PIN TAB 3");
         chrome.storage.sync.get({ tabs_map: [] }, (data) => {
-          const val = { 
+          const val = {
             snippetId: message.snippetId,
             tabId: id,
             state: "pinned",  // indicates that we need to show pinned snippet on tab activation
-            activeNote: message.activeNote };
+            activeNote: message.activeNote
+          };
           const existingIndex = data.tabs_map.findIndex(item => item.tabId === id);
           console.log("PIN TAB 4");
           if (existingIndex !== -1) {
@@ -638,7 +640,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
       else {
         console.log("PIN TAB 2 ex");
-        sendResponse({ success: false, error: "Faild to get an active tab id"});
+        sendResponse({ success: false, error: "Faild to get an active tab id" });
         return;
       }
     });
@@ -649,17 +651,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       if (tabs.length > 0) {
         let id = tabs[0].id;  // current tab id
-        
+
 
         chrome.storage.sync.get({ tabs_map: [] }, (data) => {
           const updatedTabsMap = data.tabs_map.filter(item => item.tabId !== id);
           chrome.storage.sync.set({ tabs_map: updatedTabsMap }, () => {
-            sendResponse({ success: true, tab_id: id});
+            sendResponse({ success: true, tab_id: id });
           });
         });
       }
       else {
-        sendResponse({ success: false, error: "Faild to get an active tab id"});
+        sendResponse({ success: false, error: "Faild to get an active tab id" });
         return;
       }
     });
@@ -670,7 +672,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     console.log(" SnBackground.updateActiveNoteForPinnedTab STEP 1");
     if (message.snippetId < 0) {
       console.log(" SnBackground.updateActiveNoteForPinnedTab EXIT 1");
-      sendResponse({ success: false, error: "Invalid snippet id " + message.snippetId});
+      sendResponse({ success: false, error: "Invalid snippet id " + message.snippetId });
       return;
     }
     chrome.storage.sync.get({ tabs_map: [], active_tab_id: -1 }, (data) => {
@@ -678,7 +680,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       const index = data.tabs_map.findIndex(item => item.tabId === data.active_tab_id);
       if (index < 0) {
         console.log(" SnBackground.updateActiveNoteForPinnedTab EXIT 2");
-        sendResponse({ success: false, error: "Failed to find a pinned tab"});
+        sendResponse({ success: false, error: "Failed to find a pinned tab" });
         return;
       }
       data.tabs_map[index].activeNote = message.activeNote;
@@ -692,7 +694,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.log(`An active not index for tab with tabId ${data.active_tab_id} was updated.`);
       });
 
-      sendResponse({ success: true, error: ""});
+      sendResponse({ success: true, error: "" });
 
     });
     return true;
@@ -706,44 +708,44 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 // Keeps origin and pathname, removes query params and fragments
 function sanitizeUrl(url) {
   try {
-      const urlObject = new URL(url);
-      const pathname = urlObject.pathname.split(";")[0];
-      return `${urlObject.origin}${pathname}`;
+    const urlObject = new URL(url);
+    const pathname = urlObject.pathname.split(";")[0];
+    return `${urlObject.origin}${pathname}`;
   } catch (error) {
-      console.error("Error sanitizing URL:", error);
-      return url; // If URL parsing fails, return the original URL
+    console.error("Error sanitizing URL:", error);
+    return url; // If URL parsing fails, return the original URL
   }
 }
 
 function notifyTabsNoteChange(action, data, excludeCurrentTab = false) {
-    const sanitizedNoteUrl = sanitizeUrl(data.note.url);
-    // Do nothing if there is no urls for notification
-    if (!sanitizedNoteUrl || sanitizedNoteUrl == "")
-      return
-    try {
-    chrome.tabs.query({}, function(tabs) {
+  const sanitizedNoteUrl = sanitizeUrl(data.note.url);
+  // Do nothing if there is no urls for notification
+  if (!sanitizedNoteUrl || sanitizedNoteUrl == "")
+    return
+  try {
+    chrome.tabs.query({}, function (tabs) {
       try {
         tabs.forEach((tab) => {
-            // Skip the current active tab if excludeCurrentTab is true
-            if (excludeCurrentTab && tab.active && tab.highlighted) {
-              return;
+          // Skip the current active tab if excludeCurrentTab is true
+          if (excludeCurrentTab && tab.active && tab.highlighted) {
+            return;
+          }
+          //
+          // skip muted tabs
+          //
+          if (tab.mutedInfo.muted) {
+            return;
+          }
+          if (tab.url) {
+            const sanitizedTabUrl = sanitizeUrl(tab.url);
+            if (sanitizedNoteUrl.includes(sanitizedTabUrl)) {
+              chrome.tabs.sendMessage(tab.id, {
+                action: action, // onNoteUpdate, onNoteRemove
+                note: data.note,
+                snippetId: data.snippetId
+              });
             }
-            //
-            // skip muted tabs
-            //
-            if (tab.mutedInfo.muted) {
-              return;
-            }
-            if (tab.url) {
-                const sanitizedTabUrl = sanitizeUrl(tab.url);
-                if (sanitizedNoteUrl.includes(sanitizedTabUrl)) {
-                    chrome.tabs.sendMessage(tab.id, {
-                      action: action, // onNoteUpdate, onNoteRemove
-                      note: data.note,
-                      snippetId: data.snippetId
-                    });
-                }
-            }
+          }
         });
       } catch (error) {
         console.error(' WRONG tab send ??? Unexpected error:', error);
@@ -764,29 +766,29 @@ function notifyTabsSnippetRemove(snId, notes) {
   const noteIds = [];
 
   notes.forEach(note => {
-      // Sanitize the URL and add it to the set
-      const sanitizedUrl = sanitizeUrl(note.url);
-      sanitizedUrlsSet.add(sanitizedUrl);
+    // Sanitize the URL and add it to the set
+    const sanitizedUrl = sanitizeUrl(note.url);
+    sanitizedUrlsSet.add(sanitizedUrl);
 
-      // Add note id to noteIds array
-      noteIds.push(note.id);
+    // Add note id to noteIds array
+    noteIds.push(note.id);
   });
 
   // Convert the Set to an array to get unique sanitized URLs
   const uniqueSanitizedUrls = Array.from(sanitizedUrlsSet);
 
-  chrome.tabs.query({}, function(tabs) {
+  chrome.tabs.query({}, function (tabs) {
     tabs.forEach((tab) => {
-        if (tab.url) {
-            const sanitizedTabUrl = sanitizeUrl(tab.url);
-            if (uniqueSanitizedUrls.includes(sanitizedTabUrl)) {
-                chrome.tabs.sendMessage(tab.id, {
-                    action: "onSnippetRemove",
-                    noteIdList: noteIds,
-                    snippetId: snId
-                });
-            }
+      if (tab.url) {
+        const sanitizedTabUrl = sanitizeUrl(tab.url);
+        if (uniqueSanitizedUrls.includes(sanitizedTabUrl)) {
+          chrome.tabs.sendMessage(tab.id, {
+            action: "onSnippetRemove",
+            noteIdList: noteIds,
+            snippetId: snId
+          });
         }
+      }
     });
   });
 }
