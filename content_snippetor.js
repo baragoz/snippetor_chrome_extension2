@@ -57,7 +57,7 @@
           chrome.storage.sync.get({ snippets: [] }, (data) => {
             const updatedSnippets = [...data.snippets, sdata];
             // save an updated list
-            chrome.storage.sync.set({ snippets: updatedSnippets, active_snippet: sdata.id }, () => {
+            chrome.storage.sync.set({ snippets: updatedSnippets }, () => {
               // Keep notes under the local snippet id, not the original one
               // it is allow user to open the same snippet multiple times
               chrome.storage.sync.set({ 
@@ -65,6 +65,18 @@
                 [`active_note_${sdata.id}`] : 0 }, () => {
                   // event.data.id - is callback id, which should be called on processing completion
                   window.postMessage({ action: "snippetAPI.callback", id: event.data.id, result: true }, "*");
+
+                  //
+                  // Force snippet to open snippet in a new tab and pin it to that tab
+                  //
+                  if (event.data.notes.length > 0) {
+                    chrome.runtime.sendMessage({ action: "SnBackground.openAsPinnedSnippet",
+                      snippetId: sdata.id,
+                      activeNote: 0,
+                      url: event.data.notes[0].url
+                    });
+                  }
+
                });
             });
           });

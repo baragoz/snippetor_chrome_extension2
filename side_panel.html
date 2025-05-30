@@ -5,55 +5,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GitHub Notes</title>
-  <!-- HEADER PART -->
-  <!-- style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background-color: #F0FDFD;
-    }
-
-    .sn-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 60px;
-      background-color: #E8F0FE;
-      color: #333;
-      padding: 0 15px;
-      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    }
-
-    .sn-header .sn-back-button {
-      font-size: 18px;
-      cursor: pointer;
-      display: flex;
-      align-items: center
-    }
-
-    .sn-header .sn-title {
-      flex: 1;
-      text-align: center;
-      font-size: 18px;
-      font-weight: bold;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .sn-header .sn-icon-space {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .sn-header .sn-icon-space svg {
-      width: 24px;
-      height: 24px;
-      cursor: pointer;
-    }
-  </style -->
   <style>
     #dw-main-container {
       padding: 16px;
@@ -104,7 +55,7 @@
 
     .sn-divider {
       height: 1px;
-      background-color: #ccc;
+      background-color: #373F51;
       margin: 5px 0;
     }
 
@@ -155,6 +106,10 @@
     }
 
     #dw-save-snippet {
+      display: contents;
+    }
+
+    #dw-download-snippet {
       display: contents;
     }
 
@@ -342,32 +297,6 @@
       padding-right: 16px;
     }
 
-    .sn-snippet-mode .sn-divider,
-    .sn-snippet-mode #dw-snippet-controls,
-    .sn-snippet-mode #dw-navigation-buttons,
-    .sn-snippet-mode #dw-branch-toggle,
-    .sn-snippet-mode #dw-note-list {
-      display: none;
-    }
-
-    .sn-snippet-mode #dw-back-button,
-    .sn-snippet-mode #dw-title,
-    .sn-snippet-mode #dw-icon-space {
-      display: none;
-    }
-
-    #dw-snippet-list,
-    #dw-snippets-icon,
-    #dw-snippets-title {
-      display: none;
-    }
-
-    .sn-snippet-mode #dw-snippet-list,
-    .sn-snippet-mode #dw-snippets-icon,
-    .sn-snippet-mode #dw-snippets-title {
-      display: flex;
-    }
-
     #dw-snippet-list-wrapper {
       background-color: #FAFBFC;
       padding: 32px;
@@ -424,6 +353,7 @@
     #dw-tab-list {
       display: none;
     }
+
     #dw-tab-list.sn-show-tabs {
       display: block;
     }
@@ -506,163 +436,200 @@
       opacity: 0.6;
     }
   </style>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #F0FDFD;
+    }
+
+    .sn-header {
+      width: calc(100% - 8px);
+      display: flex;
+      align-items: stretch;
+      /* Ensure tabs take full height */
+      height: 36px;
+      background-color: #373F51;
+      padding-top: 12px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+
+    .sn-tabs {
+      display: contents;
+      width: calc(100% - 8px);
+    }
+
+    .sn-tab {
+      max-width: 160px;
+      flex: 1;
+      /* Make tabs equal width */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s, border-radius 0.3s;
+      border: 1px solid transparent;
+      height: 100%;
+      /* Ensure tabs take full height of header */
+      border-top-right-radius: 17px;
+      border-top-left-radius: 17px;
+      position: relative;
+    }
+
+    /* Default state */
+    .sn-tab.default {
+      background-color: #373F51;
+      color: #FAFEFE;
+      border: 1px solid #A0AAB4;
+    }
+
+    /* Hover state */
+    .sn-tab:hover:not(.disabled):not(.active) {
+      background-color: #5C6784;
+      color: #F0FDFD;
+    }
+
+    /* Active state */
+    .sn-tab.active {
+      background-color: #F0FDFD;
+      color: #000;
+      z-index: 2;
+    }
+
+    .sn-tab.active svg {
+      fill: #373F51;
+    }
+
+    /* Sibling tabs (non-active) */
+    .sn-tab.default:not(.active) {
+      border-top-left-radius: 17px;
+      border-top-right-radius: 17px;
+      border-bottom-left-radius: 0;
+      border-bottom-right-radius: 0;
+    }
+
+    /* Disabled state */
+    .sn-tab.disabled {
+      background-color: #F0F0F0;
+      color: #999;
+      cursor: not-allowed;
+      border: 1px solid #DDD;
+      border-radius: 10px;
+      /* Keep consistent with others */
+    }
+
+    .sn-svg {
+      position: absolute;
+      right: 17px;
+    }
+  </style>
+  <style>
+    .sn-icon-space {
+      display: inline-flex;
+      flex-grow: 1;
+      gap: 8px;
+    }
+
+    /* uses to split snippets list tab from the active/pinned tabs */
+    .sn-space-between-tabs {
+      min-width: 40px;
+      flex-grow: 1;
+    }
+
+    #dw-tab-snippets {
+      max-width: 45px;
+      border-top-right-radius: 7px;
+      border-top-left-radius: 7px;
+    }
+
+    #dw-tab-active {
+      border-top-right-radius: 27px;
+      border-top-left-radius: 7px;
+      margin-left: 2px;
+    }
+
+    #dw-tab-pinned {
+      border-top-right-radius: 7px;
+      border-top-left-radius: 27px;
+    }
+
+    #dw-toolbar-icons {
+      display: flex;
+    }
+
+    #dw-icon-space {
+      gap: 12px;
+    }
+
+    .sn-right-side-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* States of pinned icon */
+    .sn-pinned-icon {
+      display: none;
+    }
+    .sn-pinned-state .sn-unpinned-icon {
+      display: none;
+    }
+    .sn-pinned-state .sn-pinned-icon {
+      display: flex;
+    }
 
 
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background-color: #F0FDFD;
-  }
+    #dw-active-view,
+    #dw-pinned-view,
+    #dw-snippet-list {
+      display: none;
+    }
 
-  .sn-header {
-    width: calc(100% - 8px);
-    display: flex;
-    align-items: stretch; /* Ensure tabs take full height */
-    height: 36px;
-    background-color: #373F51;
-    padding-top: 12px;
-    padding-left: 4px;
-    padding-right: 4px;
-  }
-
-  .sn-tabs {
-    display: contents;
-    width: calc(100% - 8px);
-  }
-
-  .sn-tab {
-    width: 100%;
-    flex: 1; /* Make tabs equal width */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s, border-radius 0.3s;
-    border: 1px solid transparent;
-    height: 100%; /* Ensure tabs take full height of header */
-    border-top-right-radius: 17px;
-    border-top-left-radius: 17px;
-    position: relative;
-  }
-
-  /* Default state */
-  .sn-tab.default {
-    background-color: #373F51;
-    color: #FAFEFE;
-    border: 1px solid #A0AAB4;
-  }
-
-  /* Hover state */
-  .sn-tab:hover:not(.disabled):not(.active) {
-    background-color: #5C6784;
-    color: #F0FDFD;
-  }
-
-  /* Active state */
-  .sn-tab.active {
-    background-color: #F0FDFD;
-    color: #000;
-    z-index: 2;
-  }
-
-  .sn-tab.active svg {
-    fill: #373F51;
-  }
-
-  /* Sibling tabs (non-active) */
-  .sn-tab.default:not(.active) {
-    border-top-left-radius: 17px;
-    border-top-right-radius: 17px;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-  }
-
-  /* Disabled state */
-  .sn-tab.disabled {
-    background-color: #F0F0F0;
-    color: #999;
-    cursor: not-allowed;
-    border: 1px solid #DDD;
-    border-radius: 10px; /* Keep consistent with others */
-  }
-
-  .sn-svg {
-    position:absolute;
-    right: 17px;
-  }
-</style>
+    #dw-active-view.sn-show-view,
+    #dw-pinned-view.sn-show-view,
+    #dw-snippet-list.sn-show-view {
+      display: block;
+    }
+  </style>
 </head>
 
 <body>
   <div id="dw-header" class="sn-header">
     <div class="sn-tabs">
-      <div id="dw-tab-snippets" class="sn-tab default" data="snippets">Snippets
+      <div id="dw-tab-snippets" class="sn-tab default" data="snippets">
         <div class="sn-svg">
-          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#fafefe"><path d="M240-280h240v-80H240v80Zm120-160h240v-80H360v80Zm120-160h240v-80H480v80ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fafefe">
+            <path
+              d="M240-280h240v-80H240v80Zm120-160h240v-80H360v80Zm120-160h240v-80H480v80ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
         </div>
 
       </div>
       <div id="dw-tab-active" class="sn-tab active" data="active">Active
-        <div class="sn-svg">
-          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#373F51"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z"/></svg>
+        <div class="sn-svg" id="dw-tab-close-active">
+          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#fafefe">
+            <path
+              d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h560q33 0 56.5 23.5T840-760v560q0 33-23.5 56.5T760-120H200Zm0-80h560v-560H200v560Zm0-560v560-560Z" />
+          </svg>
         </div>
       </div>
+
+      <div class="sn-space-between-tabs"></div>
       <div id="dw-tab-pinned" class="sn-tab default" data="pinned">Pinned
         <div class="sn-svg">
-        <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#FAFEFE">
-          <path d="M640-480l80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280ZM400-680h160v280H400v-280Z"/>
-        </svg>
-      </div>
+          <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#FAFEFE">
+            <path
+              d="M640-480l80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280ZM400-680h160v280H400v-280Z" />
+          </svg>
+        </div>
       </div>
     </div>
   </div>
 
-  <!-- div id="dw-header" class="sn-header">
-    <div id="dw-back-button" class="sn-back-button">
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-        <path d="M400-80 0-480l400-400 71 71-329 329 329 329-71 71Z" />
-      </svg>
-      Snippets
-    </div>
-    <div id="dw-title" class="sn-title">Working Snippet</div>
-    <div id="dw-icon-space" class="sn-icon-space">
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-        <title>Unpin snippet from current tab</title>
-        <path
-          d="M680-840v80h-40v327l-80-80v-247H400v87l-87-87-33-33v-47h400ZM480-40l-40-40v-240H240v-80l80-80v-46L56-792l56-56 736 736-58 56-264-264h-6v240l-40 40ZM354-400h92l-44-44-2-2-46 46Zm126-193Zm-78 149Z" />
-      </svg>
-      <div id="dw-show-tabs">
-        <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-         <title>Show all pinned tabs</title>
-          <path
-            d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-        </svg>
-      </div>
-    </div>
-    <div id="dw-snippets-title" class="sn-title">List of Snippets</div>
-    <div id="dw-snippets-icon" class="sn-icon-space">
-      <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-        <title>Actions</title>
-        <path
-          d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z" />
-      </svg>
-    </div>
-  </div -->
-
   <div id="dw-tab-list">
-    <!-- Header 
-    <div class="sn-header">
-      <div>URL</div>
-      <div>Active Index</div>
-      <div>Revision Type</div>
-      <div>Open Tab</div>
-    </div>
-  --> 
-
     <!-- Rows -->
     <div class="sn-row sn-active">
       <div class="sn-url">
@@ -701,46 +668,94 @@
 
 
   <div id="dw-main-container" class="sn-snippet-mode">
-    <div id="dw-toolbar">
-      <!-- Snippet Controls -->
+    <div id="dw-active-view"></div>
+    <div id="dw-pinned-view"></div>
+    <!-- div id="dw-snippet-view">
+      <div id="dw-toolbar-icons">
+        <div id="dw-icon-space" class="sn-icon-space">
+          <div id="dw-pin-current-tab">
+            <div class="sn-unpinned-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                <title>Pin snippet to current tab</title>
+                <path d="M640-480l80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280ZM480-400h126l-46-46v-314H400v314l-46 46h126Z" />
+              </svg>
+            </div>
+            <div class="sn-pinned-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                <title>Un-pin snippet from current tab</title>
+                <path d="M640-480l80 80v80H520v240l-40 40-40-40v-240H240v-80l80-80v-280h-40v-80h400v80h-40v280ZM400-680h160v280H400v-280Z"/>
+              </svg>
+            </div>
+          </div>
+          <div id="dw-show-tabs">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <title>[Next Release] Show all pinned tabs</title>
+              <path
+                d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="sn-right-side-buttons">
+          <button id="dw-download-snippet" title="[Next Release] Download as JSON" class="sn-button">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <path
+                d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+            </svg>
+          </button>
+          <button id="dw-save-snippet" title="Go to save page" class="sn-button">
+            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <path
+                d="M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h480q33 0 56.5 23.5T800-800v640q0 33-23.5 56.5T720-80H240Zm0-80h480v-640h-80v280l-100-60-100 60v-280H240v640Zm0 0v-640 640Zm200-360 100-60 100 60-100-60-100 60Z" />
+            </svg></button>
+          <button id="dw-remove-snippet" title="Remove local changes" class="sn-button"><svg
+              xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+              <path
+                d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" />
+            </svg>
+          </button>
+        </div>
+      </div>
       <div id="dw-snippet-controls">
         <span id="dw-current-snippet-title" title="Edit snippet title">Snippet title</span>
-        <button id="dw-save-snippet" title="Go to save page" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg"
-            height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-            <path
-              d="M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h480q33 0 56.5 23.5T800-800v640q0 33-23.5 56.5T720-80H240Zm0-80h480v-640h-80v280l-100-60-100 60v-280H240v640Zm0 0v-640 640Zm200-360 100-60 100 60-100-60-100 60Z" />
-          </svg></button>
-        <button id="dw-remove-snippet" title="Remove local changes" class="sn-button"><svg
-            xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-            <path
-              d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" />
-          </svg>
-        </button>
       </div>
-    </div>
-    <div id="dw-branch-toggle">
-      <div id="dw-button-group" class="sn-btn-group">
-        <button class="sn-btn sn-btn-primary active" title="Fixed revision">Blob</button>
-        <button class="sn-btn sn-btn-primary" title="Default branch&#10;Latest Revision">Master</button>
+      <div id="dw-branch-toggle">
+        <div id="dw-button-group" class="sn-btn-group">
+          <button class="sn-btn sn-btn-primary active" title="Fixed revision">Blob</button>
+          <button class="sn-btn sn-btn-primary" title="Default branch&#10;Latest Revision">Master</button>
+        </div>
       </div>
-    </div>
+      <div id="dw-note-list"></div>
+      <div class="sn-divider"></div>
 
-    <div id="dw-note-list"></div>
+      <div id="dw-navigation-buttons">
+        <button id="dw-notes-prev" class="sn-button">Prev</button>
+        <button id="dw-notes-next" class="sn-button">Next</button>
+      </div>
+    </div -->
 
     <div id="dw-snippet-list">
       <div id="dw-snippet-list-wrapper" class="sn-wrap-div">
-        <div id="dw-new-snippet-list" class="sn-button"><svg xmlns="http://www.w3.org/2000/svg" height="24px"
-            viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+        <a href="#" id="dw-search-snippet" class="sn-button">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+            <path
+              d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q146 0 255.5 91.5T872-559h-82q-19-73-68.5-130.5T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h80v120h-40L168-552q-3 18-5.5 36t-2.5 36q0 131 92 225t228 95v80Zm364-20L716-228q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-380q0-75 52.5-127.5T620-560q75 0 127.5 52.5T800-380q0 27-8 51t-20 45l128 128-56 56ZM620-280q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
+          </svg>
+          Search snippet on <br>
+          <div id="dw-open-snippet-search">https://snippetor.com</div>
+        </a>
+        <div class="sn-divider"></div>
+        <a href="#" id="dw-new-snippet" class="sn-button">
+          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
             <path
               d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
-          </svg>New</div>
+          </svg>
+          New
+        </a>
+        <div class="sn-divider"></div>
+        <div id="dw-new-snippet-list" class="sn-button">
+        </div>
       </div>
-    </div>
-    <div class="sn-divider"></div>
-    <!-- Navigation Buttons -->
-    <div id="dw-navigation-buttons">
-      <button id="dw-notes-prev" class="sn-button">Prev</button>
-      <button id="dw-notes-next" class="sn-button">Next</button>
     </div>
   </div>
 
