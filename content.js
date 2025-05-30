@@ -1,6 +1,6 @@
 let strings = {
   editIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefef8"><path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29ZM560-120q74 0 137-37t63-103q0-36-19-62t-51-45l-59 59q23 10 36 22t13 26q0 23-36.5 41.5T560-200q-17 0-28.5 11.5T520-160q0 17 11.5 28.5T560-120ZM183-426l60-60q-20-8-31.5-16.5T200-520q0-12 18-24t76-37q88-38 117-69t29-70q0-55-44-87.5T280-840q-45 0-80.5 16T145-785q-11 13-9 29t15 26q13 11 29 9t27-13q14-14 31-20t42-6q41 0 60.5 12t19.5 28q0 14-17.5 25.5T262-654q-80 35-111 63.5T120-520q0 32 17 54.5t46 39.5Z"/></svg>',
-  minimizeIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefef8"><path d="M200-120q-33 0-56.5-23.5T120-200v-160h80v160h160v80H200Zm400 0v-80h160v-160h80v160q0 33-23.5 56.5T760-120H600ZM120-600v-160q0-33 23.5-56.5T200-840h160v80H200v160h-80Zm640 0v-160H600v-80h160q33 0 56.5 23.5T840-760v160h-80ZM480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280Z"/><circle cx="480" cy="-480" r="120" fill="blue"/></svg>' ,
+  minimizeIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefef8"><path d="M200-120q-33 0-56.5-23.5T120-200v-160h80v160h160v80H200Zm400 0v-80h160v-160h80v160q0 33-23.5 56.5T760-120H600ZM120-600v-160q0-33 23.5-56.5T200-840h160v80H200v160h-80Zm640 0v-160H600v-80h160q33 0 56.5 23.5T840-760v160h-80ZM480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280Z"/><circle cx="480" cy="-480" r="120" fill="blue"/></svg>',
   closeIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z"/></svg>',
   reportIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-280q17 0 28.5-11.5T520-320q0-17-11.5-28.5T480-360q-17 0-28.5 11.5T440-320q0 17 11.5 28.5T480-280Zm-40-160h80v-240h-80v240ZM330-120 120-330v-300l210-210h300l210 210v300L630-120H330Zm34-80h232l164-164v-232L596-760H364L200-596v232l164 164Zm116-280Z"/></svg>',
   moveIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefef8"><path d="M320-160q-117 0-198.5-81.5T40-440q0-107 70.5-186.5T287-718l-63-66 56-56 160 160-160 160-56-57 59-59q-71 14-117 69t-46 127q0 83 58.5 141.5T320-240h120v80H320Zm200-360v-280h360v280H520Zm0 360v-280h360v280H520Zm80-80h200v-120H600v120Z"/></svg>',
@@ -25,7 +25,7 @@ class SnippetorContainer {
     this.circle = document.createElement("div");
     this.circle.className = "snippetor-note-circle";
     this.lineNumber.appendChild(this.circle);
-    
+
     // Add event listener to the circle to restore the container
     this.circle.addEventListener("click", (e) => {
       this.onRestore();
@@ -45,9 +45,9 @@ class SnippetorContainer {
 
     // Render initial state based on the provided state argument
     this.redraw(isActiveNote);
-   }
+  }
 
-   getCssElement() {
+  getCssElement() {
     const globalStyles = `
       .snippetor-sn-note-input {
         position: absolute;
@@ -219,7 +219,7 @@ class SnippetorContainer {
       this.circle.remove();
       this.circle = null;
     }
-    
+
     // Remove input container
     if (this.lineNumber.inputContainer) {
       this.lineNumber.inputContainer.remove();
@@ -233,7 +233,7 @@ class SnippetorContainer {
     this.lineNumber = null;
   }
 
-  isVisible() { 
+  isVisible() {
     if (!this.lineNumber || !this.lineNumber.inputContainer)
       return false;
     return this.lineNumber.inputContainer.style.display != "none";
@@ -251,7 +251,7 @@ class SnippetorContainer {
       }
     }
   }
-  
+
   // Method to remove any existing container
   removeExistingContainer() {
     if (this.lineNumber && this.lineNumber.inputContainer) {
@@ -300,7 +300,7 @@ class SnippetorContainer {
             <button class="snippetor-button snippetor-next-button">Next</button>
         </div>
     `;
-    inputContainer.style.display = isActiveNote ? "flex" : "none"; 
+    inputContainer.style.display = isActiveNote ? "flex" : "none";
     // Append the inputContainer to the lineNumber
     this.shadow.appendChild(inputContainer);
     this.lineNumber.inputContainer = inputContainer;
@@ -333,7 +333,7 @@ class SnippetorContainer {
       }
       //
       // Disable active if needed
-      this.onLineMove(isActive ? null: this);
+      this.onLineMove(isActive ? null : this);
     });
 
     this.updateNextPrev(inputContainer);
@@ -347,7 +347,7 @@ class SnippetorContainer {
   updateNextPrev(inputContainer) {
     const previousButton = inputContainer.querySelector(".snippetor-previous-button");
     const nextButton = inputContainer.querySelector(".snippetor-next-button");
-    nextButton.disabled =  !this.note.hasNext;
+    nextButton.disabled = !this.note.hasNext;
     previousButton.disabled = !this.note.hasPrev;
   }
 
@@ -388,7 +388,7 @@ class SnippetorContainer {
     this.lineNumber.inputContainer = inputContainer;
     if (this.note.id <= 0)
       this.lineNumber.inputContainer.classList.add("snippetor-create");
-    
+
     this.lineNumber.inputContainer.scrollIntoView({ behavior: "smooth", block: "nearest" });
 
     // Query the buttons and other elements
@@ -472,11 +472,12 @@ class SnippetorContainer {
     // Send a message to the background script to save the note
     chrome.runtime.sendMessage({
       action: isUpdate ? "SnBackground.updateNote" : "SnBackground.saveNote",
-      note, snippetId: this.snippetId, isContentScript: true }, (response) => {
+      note, snippetId: this.snippetId, isContentScript: true
+    }, (response) => {
       if (response?.success) {
         console.log("GOR RESP: ", response);
         // After saving, switch back to preview mode
-        this.note = {...response.note};
+        this.note = { ...response.note };
         this.note.text = this.note.text.trim(); // Update the text data
         this.snippetId = response.snippetId;
         this.state = "view";
@@ -567,8 +568,8 @@ class SnippetorManager {
       } else if (message.action === "onNoteRemove") {
         this.createdNotes = this.createdNotes.filter((wnote) => {
           if (wnote.note.id == message.note.id) {
-              wnote.remove(); // Remove the actual DOM element
-              return false; // Exclude this wnote from the new array
+            wnote.remove(); // Remove the actual DOM element
+            return false; // Exclude this wnote from the new array
           }
           return true; // Keep this wnote in the new array
         });
@@ -576,9 +577,9 @@ class SnippetorManager {
         console.log("MESSAGE Remove snippet note ids !!!!", message);
         this.createdNotes = this.createdNotes.filter((wnote) => {
           if (message.snippetId == wnote.snippetId &&
-              message.noteIdList.includes(wnote.note.id)) {
-              wnote.remove(); // Remove the actual DOM element
-              return false; // Exclude this wnote from the new array
+            message.noteIdList.includes(wnote.note.id)) {
+            wnote.remove(); // Remove the actual DOM element
+            return false; // Exclude this wnote from the new array
           }
           return true; // Keep this wnote in the new array
         });
@@ -626,7 +627,7 @@ class SnippetorManager {
             this.removeNoteFromList(this.lineChangeNote);
             this.lineChangeNote.remove();
             this.lineChangeNote = null;
-            
+
             // force line update message to the backend
             if (lineNumber.snippetorNote) {
               lineNumber.snippetorNote.forceLineUpdate();
@@ -697,7 +698,7 @@ class SnippetorManager {
   showEditContainer(data, lineNumber) {
     // git, project, [blob|branch|defaultBranch], path, line
     const fileData = this.parser.getDefaultBranchAndBlob(lineNumber);
-    const note = { ...data, ...fileData};
+    const note = { ...data, ...fileData };
 
     // has attached snippetor container
     if (!lineNumber.snippetorNote) {
@@ -710,7 +711,7 @@ class SnippetorManager {
   }
 
   showAddedNote(note, snippetId) {
-    const lines = this.parser.getCodeLines(); 
+    const lines = this.parser.getCodeLines();
     const lineElement = this.parser.getCodeLineByUrl(note.url);
     if (lines.length > 0 && lineElement) {
       this.showPreviewContainer(note, snippetId, lineElement, lines, false);
@@ -723,7 +724,7 @@ class SnippetorManager {
       const isActiveNote = note.id === activeId;
       const elem = this.parser.getCodeLineByUrl(note.url);
       if (elem) {
-          this.showPreviewContainer(note, snippetId, elem, isActiveNote);
+        this.showPreviewContainer(note, snippetId, elem, isActiveNote);
       }
     });
   }
@@ -777,7 +778,7 @@ class GitHubContentParser {
       if (pth[2] == "blob") {
         oid = pth[3];
       }
-      path = pth.splice(0, 4).join("/"); 
+      path = pth.splice(0, 4).join("/");
     }
     // Define the script selector as a constant
     const scriptSelector = 'script[data-target="react-app.embeddedData"]';
@@ -787,36 +788,36 @@ class GitHubContentParser {
 
     // Iterate through the script tags and parse the JSON content
     for (const scriptTag of scriptTags) {
-        try {
-            const jsonData = JSON.parse(scriptTag.textContent);
+      try {
+        const jsonData = JSON.parse(scriptTag.textContent);
 
-            // Check if the required properties exist in the JSON object
-            if (
-                jsonData?.payload?.repo?.defaultBranch &&
-                jsonData?.payload?.refInfo?.currentOid
-            ) {
-                const coid = jsonData.payload.refInfo.currentOid;
-                let currentBranch = jsonData.payload.repo.defaultBranch;
-                if (coid != oid && oid.length != 20) {
-                  currentBranch = oid;
-                }
-                // Return the structure with the required items
-                return {
-                    git: "github",
-                    project: project,
-                    path: path,
-                    line: parsedLineNumber,
-                    defaultBranch: jsonData.payload.repo.defaultBranch,
-                    currentBranch: currentBranch,
-                    blob: jsonData.payload.refInfo.currentOid
-                };
-            }
-        } catch (error) {
-            console.error('Error parsing JSON data:', error);
+        // Check if the required properties exist in the JSON object
+        if (
+          jsonData?.payload?.repo?.defaultBranch &&
+          jsonData?.payload?.refInfo?.currentOid
+        ) {
+          const coid = jsonData.payload.refInfo.currentOid;
+          let currentBranch = jsonData.payload.repo.defaultBranch;
+          if (coid != oid && oid.length != 20) {
+            currentBranch = oid;
+          }
+          // Return the structure with the required items
+          return {
+            git: "github",
+            project: project,
+            path: path,
+            line: parsedLineNumber,
+            defaultBranch: jsonData.payload.repo.defaultBranch,
+            currentBranch: currentBranch,
+            blob: jsonData.payload.refInfo.currentOid
+          };
         }
+      } catch (error) {
+        console.error('Error parsing JSON data:', error);
+      }
     }
 
-    
+
 
     // Return null if no matching object is found
     return null;
@@ -861,7 +862,7 @@ class GitHubContentParser {
     ];
     const urlObj = new URL(url);
     const path = urlObj.pathname.toLowerCase();
-  
+
     return !excludedExtensions.some(extension => path.endsWith(extension));
   }
 };
@@ -916,19 +917,19 @@ class GoogleCodeParser {
   parseStartLineNumber(url) {
     try {
       const lineNumberMatch = url.match(/;l=(\d+)/);
-  
+
       if (!lineNumberMatch || lineNumberMatch.length < 2) {
         console.error("No line number information in the URL.");
         return -1;
       }
-  
+
       const startLine = parseInt(lineNumberMatch[1], 10);
-  
+
       if (isNaN(startLine)) {
         console.error("Invalid line number in the URL.");
         return -1;
       }
-  
+
       return startLine;
     } catch (error) {
       console.error("Error parsing URL:", error);
@@ -955,20 +956,20 @@ class GoogleCodeParser {
     ];
     const urlObj = new URL(url);
     const path = urlObj.pathname.toLowerCase().split(";")[0];
-  
+
     return !excludedExtensions.some(extension => path.endsWith(extension));
   }
 };
 
 
-function getContentParser(url)  {
+function getContentParser(url) {
   if (url.startsWith("https://github.com")) {
     return new GitHubContentParser();
   }
   if (url.startsWith("https://source.chromium.org/")) {
     return new GoogleCodeParser();
   }
-  
+
   return null;
 }
 
