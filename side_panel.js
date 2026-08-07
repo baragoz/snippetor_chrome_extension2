@@ -537,6 +537,55 @@ class SnippetDataProvider {
 }
 
 //
+// Shared markup for the "open tabs" panel.
+// Rendered once per SnippetView (active/pinned) so each keeps its own
+// show/hide + row state instead of a single global list shared by both.
+//
+function renderTabListMarkup() {
+  const menuIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+      <path
+        d="M480-160q-33 0-56.5-23.5T400-240q0-33 23.5-56.5T480-320q33 0 56.5 23.5T560-240q0 33-23.5 56.5T480-160Zm0-240q-33 0-56.5-23.5T400-480q0-33 23.5-56.5T480-560q33 0 56.5 23.5T560-480q0 33-23.5 56.5T480-400Zm0-240q-33 0-56.5-23.5T400-720q0-33 23.5-56.5T480-800q33 0 56.5 23.5T560-720q0 33-23.5 56.5T480-640Z" />
+    </svg>`;
+  const branchIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+      <path fill-rule="evenodd"
+        d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.492 2.492 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z" />
+    </svg>`;
+  const fileIcon = `
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+      <path
+        d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T760-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
+    </svg>`;
+
+  const row = (dotColor, ext, filename, items, branchLabel, timeAgo, active) => `
+    <div class="sn-row ${active ? "sn-active" : ""}">
+      <svg class="sn-status-dot sn-dot-${dotColor}" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" /></svg>
+      <div class="sn-file-icon" data-ext="${ext}">${fileIcon}</div>
+      <div class="sn-file-info">
+        <div class="sn-filename">${filename}</div>
+        <div class="sn-item-count">${items} items</div>
+      </div>
+      <div class="sn-branch-info">${branchIcon}<span>${branchLabel}</span></div>
+      <div class="sn-time-ago">${timeAgo}</div>
+      <div class="sn-row-menu">${menuIcon}</div>
+    </div>`;
+
+  return `
+    <div class="sn-tab-list-header">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px">
+        <path
+          d="M320-160v-80h80v-80H160q-33 0-56.5-23.5T80-400v-400q0-33 23.5-56.5T160-880h640q33 0 56.5 23.5T880-800v400q0 33-23.5 56.5T800-320H560v80h80v80H320ZM160-400h640v-400H160v400Z" />
+      </svg>
+      <span>This snippet is currently open in the following tabs:</span>
+    </div>
+    ${row("blue", "cc", "rendering_stats.cc", 26, "blob (abcdef7)", "2m ago", true)}
+    ${row("green", "py", "main:PRESUBMIT.py", 22, "branch (main)", "5m ago", false)}
+    ${row("gray", "js", "Githubviewer.js", 18, "master (default)", "12m ago", false)}
+  `;
+}
+
+//
 //  SnippetView consists of:
 //  - Toolbar
 //  - NotesView
@@ -568,12 +617,19 @@ class SnippetView {
 
   create() {
     this.container.innerHTML = `
+          <div id="dw-tab-list">${renderTabListMarkup()}</div>
           <div id="dw-toolbar-icons">
           </div>
-          <div id="dw-snippet-controls">
-            <span id="dw-current-snippet-title" title="Edit snippet title">Snippet title</span>
-          </div>
+          <div class="sn-divider"></div>
           <div id="dw-branch-toggle">
+            <div class="dw-snippet-title-row">
+              <span class="dw-edit-title-icon" title="Edit snippet title">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor">
+                  <path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29Z" />
+                </svg>
+              </span>
+              <span id="dw-current-snippet-title" title="Edit snippet title">Snippet title</span>
+            </div>
             <div id="dw-button-group" class="sn-btn-group">
               <button class="sn-btn sn-btn-primary active" title="Fixed revision">Blob</button>
               <button class="sn-btn sn-btn-primary" title="Default branch&#10;Latest Revision">Master</button>
@@ -583,8 +639,14 @@ class SnippetView {
           <div class="sn-divider"></div>
           <!-- Navigation Buttons -->
           <div id="dw-navigation-buttons">
-            <button id="dw-notes-prev" class="sn-button">Prev</button>
-            <button id="dw-notes-next" class="sn-button">Next</button>
+            <button id="dw-notes-prev" class="sn-nav-button">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M313-440l224 224-57 56-320-320 320-320 57 56-224 224h487v80H313Z"/></svg>
+              Prev
+            </button>
+            <button id="dw-notes-next" class="sn-nav-button">
+              Next
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M647-440H160v-80h487L423-744l57-56 320 320-320 320-57-56 224-224Z"/></svg>
+            </button>
           </div>
         `;
   }
@@ -602,6 +664,22 @@ class SnippetView {
     // bottom - next/prev snippet
     this.container.querySelector("#dw-notes-prev").addEventListener("click", () => this.handlePrevNote());
     this.container.querySelector("#dw-notes-next").addEventListener("click", () => this.handleNextNote());
+
+    // "N tabs" badge on the Active tab header
+    if (!this.isPinned) {
+      const tabCount = this.container.querySelectorAll("#dw-tab-list .sn-row").length;
+      const badge = document.getElementById("dw-tab-active-badge");
+      if (badge) badge.textContent = tabCount;
+    }
+
+    // Blob/Master toggle: was pure markup with no click handler, so
+    // "Master" could never actually become the selected option
+    this.container.querySelectorAll("#dw-button-group .sn-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        this.container.querySelectorAll("#dw-button-group .sn-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+      });
+    });
   }
 
   show() {
@@ -758,6 +836,9 @@ class ToolbarView {
   constructor(snippetContainer, isPinned, snippetView) {
     this.isPinned = isPinned;
     this.snippetView = snippetView;
+    // Keep a reference to the whole view (active/pinned), since the tab
+    // list lives there as a sibling of #dw-toolbar-icons, not inside it.
+    this.snippetContainer = snippetContainer;
     console.log("SNIPPET CONTAINER IS :", snippetContainer);
     this.container = snippetContainer.querySelector("#dw-toolbar-icons");
 
@@ -786,11 +867,20 @@ class ToolbarView {
             </div>
           </div>
           <div id="dw-show-tabs">
-            <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-              <title>[Next Release] Show all pinned tabs</title>
-              <path
-                d="M320-240q-33 0-56.5-23.5T240-320v-480q0-33 23.5-56.5T320-880h480q33 0 56.5 23.5T880-800v480q0 33-23.5 56.5T800-240H320Zm0-80h480v-320H520v-160H320v480ZM160-80q-33 0-56.5-23.5T80-160v-560h80v560h560v80H160Zm160-720v480-480Z" />
-            </svg>
+            <div class="sn-tabs-icon-collapsed">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                <title>Show all tabs with this snippet</title>
+                <path
+                  d="M360-240q-33 0-56.5-23.5T280-320v-480q0-33 23.5-56.5T360-880h360q33 0 56.5 23.5T800-800v480q0 33-23.5 56.5T720-240H360Zm0-80h360v-480H360v480ZM200-80q-33 0-56.5-23.5T120-160v-560h80v560h560v80H200Zm160-240v-480 480Z" />
+              </svg>
+            </div>
+            <div class="sn-tabs-icon-expanded">
+              <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
+                <title>Hide tabs with this snippet</title>
+                <path
+                  d="M360-240q-17 0-28.5-11.5T320-280v-480q0-17 11.5-28.5T360-800h360q17 0 28.5 11.5T760-760v480q0 17-11.5 28.5T720-240H360Zm-160 160q-17 0-28.5-11.5T160-120v-560h80v560h480v80H200Z" />
+              </svg>
+            </div>
           </div>
         </div>
 
@@ -804,12 +894,12 @@ class ToolbarView {
           <button id="dw-save-snippet" title="Go to save page" class="sn-button">
             <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
               <path
-                d="M240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h480q33 0 56.5 23.5T800-800v640q0 33-23.5 56.5T720-80H240Zm0-80h480v-640h-80v280l-100-60-100 60v-280H240v640Zm0 0v-640 640Zm200-360 100-60 100 60-100-60-100 60Z" />
+                d="M840-680v480q0 33-23.5 56.5T760-120H200q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h480l160 160Zm-80 34L646-760H200v560h560v-446ZM480-240q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29ZM240-560h360v-160H240v160Zm-40-14v-186 560-374Z" />
             </svg></button>
           <button id="dw-remove-snippet" title="Remove local changes" class="sn-button"><svg
               xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
               <path
-                d="m376-300 104-104 104 104 56-56-104-104 104-104-56-56-104 104-104-104-56 56 104 104-104 104 56 56Zm-96 180q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520Zm-400 0v520-520Z" />
+                d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z" />
             </svg>
           </button>
         </div>
@@ -825,7 +915,9 @@ class ToolbarView {
     if (this.isPinned)
       this.container.querySelector("#dw-pin-current-tab").classList.add("sn-pinned-state");
 
-    this.tabsContainer = document.getElementById("dw-tab-list");
+    // Scoped to this view (active or pinned), not the global document,
+    // so each view toggles its own tab list independently.
+    this.tabsContainer = this.snippetContainer.querySelector("#dw-tab-list");
     //
     // Find elements by id in scope of this.container
     //
@@ -851,6 +943,9 @@ class ToolbarView {
     } else {
       this.tabsContainer.classList.remove("sn-show-tabs");
     }
+
+    // Filled icon while the tab list is expanded
+    this.container.querySelector("#dw-show-tabs").classList.toggle("sn-active", shouldShow);
   }
 
   saveSnippet() {
@@ -876,7 +971,14 @@ class NotesView {
       // Collapse note
       arrowDownIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"/></svg>',
       arrowUpIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg>',
+      // Remove note
+      closeIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="m336-280-56-56 144-144-144-144 56-56 144 144 144-144 56 56-144 144 144 144-56 56-144-144-144 144Z"/></svg>',
+      // Subheader: tab-open status + branch
+      dotIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#bbb"/></svg>',
+      branchIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.492 2.492 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"/></svg>',
     };
+    // Cycled per note position, purely a visual grouping aid (left border color)
+    this.colorPalette = ["#3b82f6", "#8b5cf6", "#22c55e", "#f97316", "#ef4444"];
   }
 
   init(snippetId, notes) {
@@ -890,14 +992,16 @@ class NotesView {
       noteElement.setAttribute("sn-note-url", note.url);
       noteElement.setAttribute("sn-note-text", note.text);
       noteElement.setAttribute("sn-note-id", note.id);
+      noteElement.style.borderLeftColor = this.colorPalette[noteIndex % this.colorPalette.length];
       noteElement.innerHTML = `
                 <div class="dw-note-header">
-                    <div class="dw-note-filename" title="${note.url}">${this.getFileName(note.url)}</div>
+                    <div class="dw-note-filename" title="${note.url}">${this.getFileName(note.url)} <span class="dw-note-count">| ${this.getItemCount(note.text)}</span></div>
                     <div class="dw-note-collapse" title="Collapse/Expand">${this.icons.arrowDownIcon}</div>
-                    <span class="dw-close-icon" title="Remove note">&times;</span>
+                    <span class="dw-close-icon" title="Remove note">${this.icons.closeIcon}</span>
                 </div>
                 <div class="dw-note-subheader">
-                    <span class="dw-github-icon" title="GitHub"></span>
+                    <span class="dw-github-icon" title="Open in a tab">${this.icons.dotIcon}</span>
+                    <span class="dw-branch-icon" title="Branch">${this.icons.branchIcon}</span>
                     <span class="dw-repo-name">${this.getRepoName(note.url)}</span>
                 </div>
                 <div class="dw-note-wrapper">
@@ -1060,12 +1164,20 @@ class NotesView {
     const pathParts = new URL(url).pathname.split("/");
     return `${pathParts[1]}/${pathParts[2]}`;
   }
+
+  // Line count of the note's own text, shown next to the filename
+  getItemCount(text) {
+    return (text || "").split("\n").length;
+  }
 }
 
 class SnippetsListDataProvider {
   constructor(observer) {
     this.observer = observer;
     this.snippets = [];
+    // snippetId -> number of notes, used to tell "Modified" (has notes)
+    // apart from "Unmodified" (created but nothing added yet)
+    this.noteCounts = {};
 
     // init storage data
     this.init();
@@ -1076,26 +1188,56 @@ class SnippetsListDataProvider {
       // update initial parametes
       this.snippets = data.snippets;
 
-      // notify observer
-      this.observer.onDataReady();
+      this.loadNoteCounts(() => {
+        // notify observer
+        this.observer.onDataReady();
 
-      // init data change listener
-      this.initListener();
+        // init data change listener
+        this.initListener();
+      });
     });
+  }
+
+  loadNoteCounts(callback) {
+    if (this.snippets.length === 0) {
+      this.noteCounts = {};
+      callback();
+      return;
+    }
+    const keys = {};
+    this.snippets.forEach((s) => { keys[`notes_${s.id}`] = []; });
+    chrome.storage.sync.get(keys, (data) => {
+      this.noteCounts = {};
+      this.snippets.forEach((s) => {
+        this.noteCounts[s.id] = (data[`notes_${s.id}`] || []).length;
+      });
+      callback();
+    });
+  }
+
+  getNoteCount(snippetId) {
+    return this.noteCounts[snippetId] || 0;
   }
 
   initListener() {
     // Listen for changes in chrome.storage.sync
     chrome.storage.onChanged.addListener((changes, areaName) => {
       if (areaName === 'sync') {
+        let noteCountIds = this.snippets.map((s) => s.id);
+        let touchedCounts = false;
         for (let key in changes) {
-          //
-          // Polling only list of snippets change
-          //
           if (key === 'snippets') {
             this.snippets = changes[key].newValue;
-            this.observer.onStateChange();
+            this.loadNoteCounts(() => this.observer.onStateChange());
+            return;
           }
+          // notes_<id> for one of the snippets we're showing: refresh its count
+          if (noteCountIds.some((id) => key === `notes_${id}`)) {
+            touchedCounts = true;
+          }
+        }
+        if (touchedCounts) {
+          this.loadNoteCounts(() => this.observer.onStateChange());
         }
       }
     });
@@ -1114,16 +1256,30 @@ class SnippetsListView {
   constructor(elementId, tabsManager) {
     this.container = document.getElementById(elementId);
     this.listElement = document.querySelector("#dw-new-snippet-list");
+    this.emptyElement = document.querySelector("#dw-snippet-list-empty");
+    this.headerElement = document.querySelector(".dw-opened-snippets-header");
+    this.countBadge = document.querySelector("#dw-opened-snippets-count");
     //
     // API to create a new snippet or open selected snippet in an active tab
     //
     this.tabsManager = tabsManager;
 
     this.icons = {
-      // snippet state
-      new: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54h-82l-7-40-433 77 40 226v279q-16-9-27.5-24T158-276L81-710Zm279 110v440h280l160-160v-280H360Zm220 220Zm-40 160h80v-120h120v-80H620v-120h-80v120H420v80h120v120Z"/></svg>`,
-      play: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/></svg>`,
+      file: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T760-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>`,
+      dot: `<svg class="dw-status-dot" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>`,
+      open: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z"/></svg>`,
+      trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>`,
+      close: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m336-280-56-56 144-144-144-144 56-56 144 144 144-144 56 56-144 144 144 144-56 56-144-144-144 144Z"/></svg>`,
     };
+
+    // Cycled per row, purely a visual grouping aid (same idea as the note-color palette)
+    this.colorPalette = [
+      { bg: "#e3edff", fg: "#2f6fed" },
+      { bg: "#f3e8ff", fg: "#8b5cf6" },
+      { bg: "#e7f6ec", fg: "#22c55e" },
+      { bg: "#fff1e0", fg: "#f97316" },
+      { bg: "#fde8e8", fg: "#ef4444" },
+    ];
 
     this.dataProvider = new SnippetsListDataProvider(this);
 
@@ -1132,20 +1288,27 @@ class SnippetsListView {
 
   init() {
     //
-    //  Save snippet on a website
+    //  Snippetor home / search links
     //
-    document.getElementById("dw-open-snippet-search").addEventListener("click", (e) => {
+    document.getElementById("dw-open-snippetor").addEventListener("click", (e) => {
+      e.preventDefault();
+      chrome.tabs.create({ url: `https://snippetor.com` });
+    });
+
+    document.getElementById("dw-search-snippet").addEventListener("click", (e) => {
+      e.preventDefault();
       chrome.tabs.create({ url: `https://snippetor.com/search` });
     });
 
     //
-    //  Crate a new snippet
+    //  Create a new snippet (main CTA + empty-state CTA)
     //
-    document.getElementById("dw-new-snippet").addEventListener("click", (e) => {
+    const createNewSnippet = (e) => {
       e.preventDefault();
-      // Tab manager should handle snippets creation
       this.tabsManager.createNewSnippet();
-    });
+    };
+    document.getElementById("dw-new-snippet").addEventListener("click", createNewSnippet);
+    document.getElementById("dw-new-snippet-empty").addEventListener("click", createNewSnippet);
   }
 
   show() {
@@ -1164,22 +1327,57 @@ class SnippetsListView {
   }
 
   uiUpdateSnippetList(snippets) {
+    this.countBadge.textContent = snippets.length;
+
+    // Either the list or the empty-state illustration, never both
+    const hasSnippets = snippets.length > 0;
+    this.headerElement.style.display = hasSnippets ? "" : "none";
+    this.listElement.style.display = hasSnippets ? "" : "none";
+    this.emptyElement.style.display = hasSnippets ? "none" : "flex";
+
     // Erase the previous state
     this.listElement.innerHTML = "";
     // Add new element
-    snippets.forEach((snippet) => {
+    snippets.forEach((snippet, index) => {
+      const noteCount = this.dataProvider.getNoteCount(snippet.id);
+      const status = snippet.state === "new"
+        ? { cls: "dw-status-new", label: "New" }
+        : noteCount > 0
+          ? { cls: "dw-status-modified", label: "Modified" }
+          : { cls: "dw-status-unmodified", label: "Unmodified" };
+      const color = this.colorPalette[index % this.colorPalette.length];
+      const removeIsDestructive = status.cls !== "dw-status-unmodified";
+
       const snippetElement = document.createElement("div");
-      snippetElement.innerHTML = `
-                <a class='sn-button sn-recent-snippet' href='#'>${snippet.state === "new" ? this.icons.new : this.icons.play}&nbsp;${snippet.title}</a>`;
+      snippetElement.className = "dw-snippet-row";
       snippetElement.dataset.id = snippet.id;
+      snippetElement.innerHTML = `
+        <div class="dw-snippet-row-icon" style="background-color:${color.bg};color:${color.fg}">${this.icons.file}</div>
+        <div class="dw-snippet-row-info">
+          <div class="dw-snippet-row-title">${snippet.title}</div>
+          <div class="dw-snippet-row-status ${status.cls}">${this.icons.dot}<span>${status.label}</span></div>
+        </div>
+        <div class="dw-snippet-row-actions">
+          <button class="dw-snippet-action-btn dw-snippet-open-btn" title="Open snippet">${this.icons.open}</button>
+          <button class="dw-snippet-action-btn dw-snippet-remove-btn ${removeIsDestructive ? "dw-danger" : "dw-neutral"}" title="${removeIsDestructive ? "Delete snippet" : "Remove from list"}">${removeIsDestructive ? this.icons.trash : this.icons.close}</button>
+        </div>
+      `;
 
       snippetElement.addEventListener("click", () => {
-        //this.loadSnippet(snippet);
         this.tabsManager.setActiveSnippet(snippet.id);
+      });
+
+      snippetElement.querySelector(".dw-snippet-remove-btn").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.removeSnippet(snippet.id);
       });
 
       this.listElement.appendChild(snippetElement);
     });
+  }
+
+  removeSnippet(snippetId) {
+    chrome.runtime.sendMessage({ action: "SnBackground.removeSnippet", snippetId });
   }
 
   _getSnippetById(snippets, uid) {

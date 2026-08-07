@@ -12,29 +12,35 @@
       border-top: 0px;
       border-bottom-right-radius: 17px;
       border-bottom-left-radius: 17px;
+      min-height: calc(100vh - 48px);
+      box-sizing: border-box;
     }
 
-    #dw-snippet-controls {
+    .dw-snippet-title-row {
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding-bottom: 8px;
-      padding-top: 8px;
-      border-top: 1px solid gray;
-      border-bottom: 1px solid gray;
+      gap: 6px;
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .dw-edit-title-icon {
+      display: flex;
+      flex-shrink: 0;
+      width: 16px;
+      height: 16px;
+      color: #8a8f98;
     }
 
     #dw-current-snippet-title {
       flex-grow: 1;
-      /* Makes the span take up remaining space */
-      text-align: center;
-      /* Optional: Center the text */
+      min-width: 0;
+      text-align: left;
       white-space: nowrap;
-      /* Prevent text wrapping */
       overflow: hidden;
-      /* Hide overflowing text */
       text-overflow: ellipsis;
-      /* Show '...' if text is too long */
+      font-size: 13px;
+      color: #373f51;
     }
 
     /* DROPDOWN END */
@@ -48,9 +54,43 @@
 
     #dw-navigation-buttons {
       display: flex;
-      gap: 10px;
-      justify-content: center;
+      gap: 12px;
       margin-top: 10px;
+    }
+
+    .sn-nav-button {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border: 1px solid #d7dbe0;
+      border-radius: 10px;
+      background-color: #fff;
+      color: #1a1a1a;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    .sn-nav-button:hover:not(:disabled) {
+      background-color: #f4f6f8;
+    }
+
+    .sn-nav-button:disabled {
+      color: #b6bac0;
+      border-color: #e5e7eb;
+      cursor: default;
+    }
+
+    .sn-nav-button svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+      flex-shrink: 0;
     }
 
     .sn-divider {
@@ -124,13 +164,18 @@
       padding: 10px;
       margin-bottom: 10px;
       position: relative;
-      border-left: 3px solid white;
-      border-right: 3px solid white;
+      border-left: 4px solid #ccc;
+      /* actual color is assigned per-note via inline style, see NotesView palette */
     }
 
     .dw-note:hover {
-      border-left: 3px solid #373;
-      border-right: 3px solid #373;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+    }
+
+    .dw-note-count {
+      font-weight: 400;
+      color: #8a8f98;
+      margin-left: 4px;
     }
 
     .dw-note-header {
@@ -149,23 +194,43 @@
     }
 
     .dw-close-icon {
+      display: flex;
       cursor: pointer;
-      font-size: 16px;
       color: #888;
+      border-radius: 4px;
+      padding: 2px;
+    }
+
+    .dw-close-icon:hover {
+      background-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .dw-close-icon svg {
+      width: 14px;
+      height: 14px;
+      fill: currentColor;
     }
 
     .dw-note-subheader {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       margin-top: 5px;
     }
 
     .dw-github-icon {
-      width: 16px;
-      height: 16px;
-      background-color: #ddd;
-      border-radius: 50%;
+      display: flex;
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+
+    .dw-branch-icon {
+      display: flex;
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+      color: #9aa0a6;
     }
 
     .dw-repo-name {
@@ -182,14 +247,9 @@
       line-height: 1.4;
     }
 
-    .sn-recent-snippet {
-      display: flex;
-      align-items: center;
-    }
-
     .sn-note-active {
-      border-left: 3px solid #373F51;
-      border-right: 3px solid #373F51;
+      background-color: #eef4ff;
+      box-shadow: 0 0 0 1px #cddcf9, 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
     /* Note Edit - view part */
@@ -284,11 +344,7 @@
     }
 
     #dw-snippet-list {
-      height: calc(100vh - 250px);
-      display: none;
-      text-align: center;
-      align-items: center;
-      justify-content: center;
+      padding: 16px;
     }
 
     #dw-note-list {
@@ -297,56 +353,385 @@
       padding-right: 16px;
     }
 
-    #dw-snippet-list-wrapper {
-      background-color: #FAFBFC;
-      padding: 32px;
-      border-radius: 16px;
+    /* Snippetor / Search snippets card */
+    .dw-home-links-card {
+      display: flex;
+      border: 1px solid #e2e5ea;
+      border-radius: 12px;
+      background-color: #fff;
+      overflow: hidden;
+      margin-bottom: 16px;
     }
 
-    /* blob | master */
+    .dw-home-link-cell {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 16px;
+      text-decoration: none;
+      color: inherit;
+      min-width: 0;
+    }
+
+    .dw-home-link-cell:hover {
+      background-color: #f7f9fc;
+    }
+
+    .dw-home-link-divider {
+      width: 1px;
+      background-color: #e2e5ea;
+      margin: 16px 0;
+    }
+
+    .dw-home-link-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      background-color: #e8f0fe;
+      color: #1a73e8;
+    }
+
+    .dw-home-link-icon.dw-square {
+      border-radius: 10px;
+    }
+
+    .dw-home-link-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: currentColor;
+    }
+
+    .dw-home-link-text {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      min-width: 0;
+    }
+
+    .dw-home-link-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    .dw-home-link-sub {
+      font-size: 12px;
+      color: #1a73e8;
+      line-height: 1.4;
+    }
+
+    .dw-home-link-sub svg {
+      width: 12px;
+      height: 12px;
+      fill: currentColor;
+      vertical-align: -1px;
+      margin-left: 3px;
+    }
+
+    /* Create new snippet CTA */
+    .dw-create-snippet-cta {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background-color: #2f6fed;
+      color: #fff;
+      border-radius: 12px;
+      padding: 16px 20px;
+      text-decoration: none;
+      margin-bottom: 24px;
+      transition: background-color 0.2s;
+    }
+
+    .dw-create-snippet-cta:hover {
+      background-color: #2760d6;
+    }
+
+    .dw-cta-icon {
+      width: 36px;
+      height: 36px;
+      border: 2px solid rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dw-cta-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: #fff;
+    }
+
+    .dw-cta-text {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .dw-cta-title {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .dw-cta-sub {
+      font-size: 12px;
+      opacity: 0.85;
+    }
+
+    .dw-cta-chevron {
+      display: flex;
+      flex-shrink: 0;
+    }
+
+    .dw-cta-chevron svg {
+      width: 20px;
+      height: 20px;
+      fill: #fff;
+    }
+
+    /* Opened snippets */
+    .dw-opened-snippets-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .dw-opened-snippets-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a1a;
+    }
+
+    .dw-opened-snippets-title svg {
+      width: 18px;
+      height: 18px;
+      fill: #373f51;
+    }
+
+    .dw-snippet-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border: 1px solid #eef0f3;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      background-color: #fff;
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .dw-snippet-row:hover {
+      border-color: #d7dbe0;
+    }
+
+    .dw-snippet-row-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .dw-snippet-row-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+
+    .dw-snippet-row-info {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .dw-snippet-row-title {
+      font-weight: 700;
+      font-size: 14px;
+      color: #1a1a1a;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dw-snippet-row-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 12px;
+    }
+
+    .dw-status-dot {
+      width: 8px;
+      height: 8px;
+      flex-shrink: 0;
+    }
+
+    .dw-status-dot circle {
+      fill: currentColor;
+    }
+
+    .dw-status-new {
+      color: #2f6fed;
+    }
+
+    .dw-status-modified {
+      color: #22c55e;
+    }
+
+    .dw-status-unmodified {
+      color: #9aa0a6;
+    }
+
+    .dw-snippet-row-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .dw-snippet-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      border: none;
+      background-color: transparent;
+    }
+
+    .dw-snippet-action-btn:hover {
+      background-color: rgba(0, 0, 0, 0.06);
+    }
+
+    .dw-snippet-action-btn svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    .dw-snippet-open-btn {
+      color: #2f6fed;
+    }
+
+    .dw-snippet-remove-btn.dw-danger {
+      color: #e5484d;
+    }
+
+    .dw-snippet-remove-btn.dw-neutral {
+      color: #9aa0a6;
+    }
+
+    /* Empty state */
+    #dw-snippet-list-empty {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #fafbfc;
+      border-radius: 16px;
+      color: #5f6368;
+    }
+
+    #dw-snippet-list-empty svg {
+      width: 56px;
+      height: 56px;
+      margin-bottom: 12px;
+      fill: #c3c9d1;
+    }
+
+    .dw-empty-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: #1a1a1a;
+      margin-bottom: 4px;
+    }
+
+    .dw-empty-sub {
+      font-size: 13px;
+      margin-bottom: 16px;
+    }
+
+    .dw-empty-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 16px;
+      border: 1px solid #d7dbe0;
+      border-radius: 8px;
+      color: #2f6fed;
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      background-color: #fff;
+    }
+
+    .dw-empty-cta:hover {
+      background-color: #f4f6f8;
+    }
+
+    .dw-empty-cta svg {
+      width: 16px;
+      height: 16px;
+      fill: currentColor;
+    }
+
+    /* Updated-time + blob | master row */
     #dw-branch-toggle {
       display: flex;
-      justify-content: end;
+      align-items: center;
+      justify-content: space-between;
       padding: 10px;
+      gap: 10px;
     }
 
     #dw-button-group {
       display: inline-flex;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      overflow: hidden;
+      background-color: #eef1f4;
+      border-radius: 20px;
+      padding: 3px;
+      flex-shrink: 0;
     }
 
     .sn-btn {
-      border: none;
-      background-color: #f8f9fa;
-      color: #212529;
-      padding: 4px 8px;
-      /* Smaller padding for smaller buttons */
-      font-size: 12px;
-      /* Reduced font size */
-      text-align: center;
       flex: 1;
+      border: none;
+      background-color: transparent;
+      color: #373f51;
+      padding: 6px 16px;
+      border-radius: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
       cursor: pointer;
       outline: none;
+      transition: background-color 0.2s, color 0.2s;
     }
 
-    .sn-btn:hover {
-      background-color: #e2e6ea;
+    .sn-btn:hover:not(.active) {
+      background-color: rgba(0, 0, 0, 0.05);
     }
 
     .sn-btn.active {
-      background-color: #5F6368;
+      background-color: #1f2a44;
       color: white;
-    }
-
-    .sn-btn:first-child {
-      border-right: 1px solid #ddd;
-    }
-
-    .sn-btn:last-child {
-      border-left: 1px solid transparent;
-      /* For consistent borders */
     }
 
     /* show/hide tabs */
@@ -359,81 +744,164 @@
     }
   </style>
   <style>
-    /* Table-specific styles */
+    /* Tab list styles: shares the same background/border treatment as the
+       rest of dw-active-view / dw-pinned-view, no separate "card" look */
     #dw-tab-list {
-      max-width: 1200px;
-      margin: 20px auto;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
+      margin: 0 0 8px 0;
+      border-bottom: 1px solid gray;
+      padding-bottom: 8px;
+    }
+
+    .sn-tab-list-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      color: #373f51;
+      font-size: 13px;
+      border-bottom: 1px solid #eaeaea;
+    }
+
+    .sn-tab-list-header svg {
+      flex-shrink: 0;
+      fill: #5f6368;
     }
 
     .sn-row {
       display: flex;
       align-items: center;
-      padding: 10px 20px;
+      gap: 12px;
+      padding: 10px 16px;
       border-bottom: 1px solid #eaeaea;
-      transition: background-color 0.3s;
+      transition: background-color 0.2s;
+    }
+
+    .sn-row:last-child {
+      border-bottom: none;
     }
 
     .sn-row:hover {
-      background-color: #f0f8ff;
+      background-color: #f4f7ff;
     }
 
     .sn-row.sn-active {
-      background-color: #d8eafd;
-      font-weight: bold;
+      background-color: #e8f0fe;
     }
 
-    .sn-row>div {
-      flex: 1;
-      text-align: center;
+    /* Status dot: a filled circle, colored via `color` so the SVG can use currentColor */
+    .sn-status-dot {
+      width: 10px;
+      height: 10px;
+      flex-shrink: 0;
+    }
+
+    .sn-status-dot circle {
+      fill: currentColor;
+    }
+
+    .sn-status-dot.sn-dot-blue {
+      color: #3b82f6;
+    }
+
+    .sn-status-dot.sn-dot-green {
+      color: #22c55e;
+    }
+
+    .sn-status-dot.sn-dot-gray {
+      color: #9aa0a6;
+    }
+
+    /* File-type icon: colored square + generic document glyph as a placeholder */
+    .sn-file-icon {
+      width: 30px;
+      height: 30px;
+      flex-shrink: 0;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sn-file-icon svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .sn-file-icon[data-ext="cc"] {
+      background: #e3edff;
+      color: #2f6fed;
+    }
+
+    .sn-file-icon[data-ext="py"] {
+      background: #e7f6ec;
+      color: #2f9e57;
+    }
+
+    .sn-file-icon[data-ext="js"] {
+      background: #fff6d9;
+      color: #c99a12;
+    }
+
+    .sn-file-info {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .sn-filename {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1a1a;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    .sn-item-count {
+      font-size: 12px;
+      color: #8a8f98;
+    }
+
+    .sn-branch-info {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #5f6368;
+      font-size: 13px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
-    .sn-url {
-      text-align: left;
-      word-wrap: break-word;
-      overflow: hidden;
-      white-space: normal;
-      max-height: 3.5em;
-      line-height: 1.2em;
+    .sn-branch-info svg {
+      width: 14px;
+      height: 14px;
+      fill: #9aa0a6;
+      flex-shrink: 0;
     }
 
-    .sn-url a {
-      color: #007bff;
-      text-decoration: none;
+    .sn-time-ago {
+      font-size: 12px;
+      color: #9aa0a6;
+      flex-shrink: 0;
+      min-width: 46px;
+      text-align: right;
     }
 
-    .sn-url a:hover {
-      text-decoration: underline;
+    .sn-row-menu {
+      flex-shrink: 0;
+      display: flex;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 4px;
     }
 
-    .sn-icon {
-      position: relative;
+    .sn-row-menu:hover {
+      background-color: rgba(0, 0, 0, 0.06);
     }
 
-    .sn-icon .sn-badge {
-      position: absolute;
-      top: -5px;
-      right: -5px;
-      background: #ff5722;
-      color: white;
-      font-size: 10px;
-      border-radius: 50%;
-      padding: 2px 6px;
-    }
-
-    .sn-open-icon {
-      font-size: 18px;
-      color: #4caf50;
-    }
-
-    .sn-suspended {
-      opacity: 0.6;
+    .sn-row-menu svg {
+      width: 18px;
+      height: 18px;
+      fill: #5f6368;
     }
   </style>
   <style>
@@ -526,6 +994,18 @@
       position: absolute;
       right: 17px;
     }
+
+    .sn-tab-badge {
+      display: inline-block;
+      background-color: #e8eaed;
+      color: #373f51;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 10px;
+      padding: 1px 7px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
   </style>
   <style>
     .sn-icon-space {
@@ -583,6 +1063,19 @@
       display: flex;
     }
 
+    /* States of the show-tabs icon: filled once the tab list is expanded */
+    .sn-tabs-icon-expanded {
+      display: none;
+    }
+
+    #dw-show-tabs.sn-active .sn-tabs-icon-collapsed {
+      display: none;
+    }
+
+    #dw-show-tabs.sn-active .sn-tabs-icon-expanded {
+      display: flex;
+    }
+
 
     #dw-active-view,
     #dw-pinned-view,
@@ -611,6 +1104,7 @@
 
       </div>
       <div id="dw-tab-active" class="sn-tab active" data="active">Active
+        <span class="sn-tab-badge" id="dw-tab-active-badge">0</span>
         <div class="sn-svg" id="dw-tab-close-active">
           <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="#fafefe">
             <path
@@ -630,44 +1124,6 @@
       </div>
     </div>
   </div>
-
-  <div id="dw-tab-list">
-    <!-- Rows -->
-    <div class="sn-row sn-active">
-      <div class="sn-url">
-        <a href="#">https://example.com/blob/abcdef7?note=example</a>
-      </div>
-      <div>1</div>
-      <div>blob (abcdef7)</div>
-      <div class="sn-icon">
-        <span class="sn-open-icon">&#128279;</span>
-      </div>
-    </div>
-
-    <div class="sn-row">
-      <div class="sn-url">
-        <a href="#">https://example.com/branch/main-feature</a>
-      </div>
-      <div>2</div>
-      <div>branch (main)</div>
-      <div class="sn-icon sn-suspended">
-        <span class="sn-open-icon">&#128279;</span>
-        <span class="sn-badge">suspended</span>
-      </div>
-    </div>
-
-    <div class="sn-row">
-      <div class="sn-url">
-        <a href="#">https://example.com/defaultBranch</a>
-      </div>
-      <div>3</div>
-      <div>master (default)</div>
-      <div class="sn-icon">
-        <span class="sn-open-icon">&#128279;</span>
-      </div>
-    </div>
-  </div>
-
 
   <div id="dw-main-container" class="sn-snippet-mode">
     <div id="dw-active-view"></div>
@@ -737,26 +1193,89 @@
     </div -->
 
     <div id="dw-snippet-list">
-      <div id="dw-snippet-list-wrapper" class="sn-wrap-div">
-        <a href="#" id="dw-search-snippet" class="sn-button">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-            <path
-              d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q146 0 255.5 91.5T872-559h-82q-19-73-68.5-130.5T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h80v120h-40L168-552q-3 18-5.5 36t-2.5 36q0 131 92 225t228 95v80Zm364-20L716-228q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-380q0-75 52.5-127.5T620-560q75 0 127.5 52.5T800-380q0 27-8 51t-20 45l128 128-56 56ZM620-280q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
-          </svg>
-          Search snippet on <br>
-          <div id="dw-open-snippet-search">https://snippetor.com</div>
+      <div class="dw-home-links-card">
+        <a href="#" id="dw-open-snippetor" class="dw-home-link-cell">
+          <span class="dw-home-link-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+              <path
+                d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-82q26-36 45-75t31-83H404q12 44 31 83t45 75Zm-104-16q-18-33-31.5-68.5T322-320H204q29 50 72.5 87t99.5 55Zm208 0q56-18 99.5-55t72.5-87H638q-9 38-22.5 73.5T584-178ZM170-400h136q-3-20-4.5-39.5T300-480q0-21 1.5-40.5T306-560H170q-5 20-7.5 39.5T160-480q0 21 2.5 40.5T170-400Zm216 0h188q3-20 4.5-39.5T580-480q0-21-1.5-40.5T574-560H386q-3 20-4.5 39.5T380-480q0 21 1.5 40.5T386-400Zm268 0h136q5-20 7.5-39.5T800-480q0-21-2.5-40.5T790-560H654q3 20 4.5 39.5T660-480q0 21-1.5 40.5T654-400Zm-16-240h118q-29-50-72.5-87T584-782q18 33 31.5 68.5T638-640Zm-234 0h152q-12-44-31-83t-45-75q-26 36-45 75t-31 83Zm-224 0h118q9-38 22.5-73.5T376-782q-56 18-99.5 55T204-640Z" />
+            </svg>
+          </span>
+          <span class="dw-home-link-text">
+            <span class="dw-home-link-title">Snippetor</span>
+            <span class="dw-home-link-sub">
+              snippetor.com
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                <path
+                  d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+              </svg>
+            </span>
+          </span>
         </a>
-        <div class="sn-divider"></div>
-        <a href="#" id="dw-new-snippet" class="sn-button">
-          <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368">
-            <path
-              d="M440-240h80v-120h120v-80H520v-120h-80v120H320v80h120v120ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z" />
-          </svg>
-          New
+        <div class="dw-home-link-divider"></div>
+        <a href="#" id="dw-search-snippet" class="dw-home-link-cell">
+          <span class="dw-home-link-icon dw-square">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+              <path
+                d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q146 0 255.5 91.5T872-559h-82q-19-73-68.5-130.5T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h80v120h-40L168-552q-3 18-5.5 36t-2.5 36q0 131 92 225t228 95v80Zm364-20L716-228q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-380q0-75 52.5-127.5T620-560q75 0 127.5 52.5T800-380q0 27-8 51t-20 45l128 128-56 56ZM620-280q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
+            </svg>
+          </span>
+          <span class="dw-home-link-text">
+            <span class="dw-home-link-title">Search snippets</span>
+            <span class="dw-home-link-sub">
+              Find and reuse snippets on <span id="dw-open-snippet-search">snippetor.com</span>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+                <path
+                  d="M200-120q-33 0-56.5-23.5T120-200v-560q0-33 23.5-56.5T200-840h280v80H200v560h560v-280h80v280q0 33-23.5 56.5T760-120H200Zm188-212-56-56 372-372H560v-80h280v280h-80v-144L388-332Z" />
+              </svg>
+            </span>
+          </span>
         </a>
-        <div class="sn-divider"></div>
-        <div id="dw-new-snippet-list" class="sn-button">
-        </div>
+      </div>
+
+      <a href="#" id="dw-new-snippet" class="dw-create-snippet-cta">
+        <span class="dw-cta-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+          </svg>
+        </span>
+        <span class="dw-cta-text">
+          <span class="dw-cta-title">Create new snippet</span>
+          <span class="dw-cta-sub">Start writing a new snippet</span>
+        </span>
+        <span class="dw-cta-chevron">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path d="M504-480 320-664l56-56 240 240-240 240-56-56 184-184Z" />
+          </svg>
+        </span>
+      </a>
+
+      <div class="dw-opened-snippets-header">
+        <span class="dw-opened-snippets-title">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path
+              d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54h-82l-7-40-433 77 40 226v279q-16-9-27.5-24T158-276L81-710Zm279 110v440h280l160-160v-280H360Zm220 220Zm-40 160h80v-120h120v-80H620v-120h-80v120H420v80h120v120Z" />
+          </svg>
+          Opened snippets
+        </span>
+        <span class="sn-tab-badge" id="dw-opened-snippets-count">0</span>
+      </div>
+
+      <div id="dw-new-snippet-list"></div>
+
+      <div id="dw-snippet-list-empty">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+          <path
+            d="M480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q146 0 255.5 91.5T872-559h-82q-19-73-68.5-130.5T600-776v16q0 33-23.5 56.5T520-680h-80v80q0 17-11.5 28.5T400-560h-80v80h80v120h-40L168-552q-3 18-5.5 36t-2.5 36q0 131 92 225t228 95v80Zm364-20L716-228q-21 12-45 20t-51 8q-75 0-127.5-52.5T440-380q0-75 52.5-127.5T620-560q75 0 127.5 52.5T800-380q0 27-8 51t-20 45l128 128-56 56ZM620-280q42 0 71-29t29-71q0-42-29-71t-71-29q-42 0-71 29t-29 71q0 42 29 71t71 29Z" />
+        </svg>
+        <div class="dw-empty-title">No opened snippets</div>
+        <div class="dw-empty-sub">Open a snippet to see it here.</div>
+        <a href="#" id="dw-new-snippet-empty" class="dw-empty-cta">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">
+            <path d="M440-440H200v-80h240v-240h80v240h240v80H520v240h-80v-240Z" />
+          </svg>
+          Create new snippet
+        </a>
       </div>
     </div>
   </div>
