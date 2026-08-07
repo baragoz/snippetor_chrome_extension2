@@ -13,8 +13,7 @@
   "host_permissions": [
     "https://source.chromium.org/*",
     "https://github.com/*",
-    "http://localhost:4200/*",
-    "http://localhost:8000/*"
+    "http://127.0.0.1:8788/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -47,8 +46,7 @@
     },
     {
       "matches": [
-        "http://localhost:4200/*",
-        "http://localhost:8000/*",
+        "http://127.0.0.1:8788/*",
         "https://snipettor.firebaseapp.com/*"
       ],
       "js": [

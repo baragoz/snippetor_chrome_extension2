@@ -523,7 +523,7 @@ class SnippetorManager {
   constructor() {
     this.currentLocation = "";
     this.currentHash = "";
-    this.skipTwice = 2;
+    this.navigationDebounceTimer = null;
     this.isCssAttached = false;
     this.lineChangeNote = null;
 
@@ -740,20 +740,32 @@ class SnippetorManager {
 
   handleNavigation() {
     //
-    // TODO: find another way to check navigation change
-    //       because we are getting ~4-5 notifications on each
-    //       path change.
+    // The Navigation API fires several redundant "navigate" notifications
+    // for a single user navigation (observed on source.chromium.org).
+    // Debounce so we act once things settle, instead of trying to guess
+    // how many duplicate events to skip.
+    //
+    clearTimeout(this.navigationDebounceTimer);
+    this.navigationDebounceTimer = setTimeout(() => this.processNavigationChange(), 150);
+  }
+
+  processNavigationChange() {
     if (window.location.pathname !== this.currentLocation) {
-      if (this.skipTwice < 2) {
-        ++this.skipTwice;
-        return;
-      }
-      this.skipTwice = 0;
       this.currentLocation = window.location.pathname;
       this.currentHash = window.location.hash;
+
+      //
+      // The SPA replaced the code view in place: the line elements the
+      // previous containers were attached to are gone from the DOM, so
+      // drop those stale references instead of leaking them. Fresh notes
+      // for the new file are reloaded by addDoubleClickListeners() below.
+      //
+      this.createdNotes = [];
+      this.lineChangeNote = null;
+
       this.addDoubleClickListeners(true);
-    }
-    else if (this.currentHash != window.location.hash) {
+    } else if (this.currentHash !== window.location.hash) {
+      this.currentHash = window.location.hash;
       console.log("TODO: HANDLE HASH CHANGE");
     }
   }
