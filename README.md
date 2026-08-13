@@ -36,7 +36,7 @@ Lets you pin a snippet to a specific Chrome tab. A pinned snippet stays tied to 
 | `snippetAPI.getNotesById` | `snippetId` | `notes_<snippetId>` array |
 | `snippetAPI.updateNotes` | `snippetId`, `notes` | `true` |
 | `snippetAPI.removeSnippet` | `snippetId` | `true`; also clears `notes_<id>`/`active_note_<id>` and unsets `active_snippet` if it pointed at this snippet |
-| `snippetAPI.loadSnippet` | `snippet`, `notes`, `source` (`{ space, version?, snippetUID }`) | `{ backId }` — assigns the snippet a fresh local `id` and a freshly-minted `backId` (deliberately not the source's own id — see `Readme.snippet-source.md`), tags it with a `source` object built from the request, stores it + its notes, and asks the extension to pin it to the current tab |
+| `snippetAPI.loadSnippet` | `snippet`, `notes`, `source` (`{ space, version?, snippetUID }`) | `{ id }` — assigns the snippet a fresh local `id` (deliberately not the source's own id — see `Readme.snippet-source.md`), tags it with a `source` object built from the request, stores it + its notes, and asks the extension to pin it to the current tab |
 | `snippetAPI.onUpdate` | — | `"subscribed"` once, then ongoing `snippetAPI.listener` broadcasts |
 
 ### 2. `content_snippetor.js` ↔ the extension itself

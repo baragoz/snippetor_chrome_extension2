@@ -161,7 +161,6 @@ class TabsDataProvider {
     const id = Date.now();
     const newSnippet = {
       id,
-      state: "new",
       title: `Snippet ${id}`,
       activeNote: -1,
       source: { type: "new", space: "", version: 0, snippetUID: "", isModified: true },
