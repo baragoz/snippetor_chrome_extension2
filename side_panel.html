@@ -545,12 +545,12 @@
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      background-color: #f3f4f6;
     }
 
     .dw-snippet-row-icon svg {
-      width: 18px;
-      height: 18px;
-      fill: currentColor;
+      width: 28px;
+      height: 28px;
     }
 
     .dw-snippet-row-info {
@@ -567,34 +567,25 @@
       white-space: nowrap;
     }
 
+    /* Source + saved/modified status (see deriveSnippetStatus in
+       side_panel.js) -- the leading row icon already carries the color via
+       its badge, this is just the text label under the title. */
     .dw-snippet-row-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
       margin-top: 3px;
       font-size: 12px;
-    }
-
-    .dw-status-dot {
-      width: 8px;
-      height: 8px;
-      flex-shrink: 0;
-    }
-
-    .dw-status-dot circle {
-      fill: currentColor;
+      font-weight: 600;
     }
 
     .dw-status-new {
-      color: #2f6fed;
+      color: #7c3aed;
+    }
+
+    .dw-status-saved {
+      color: #16a34a;
     }
 
     .dw-status-modified {
-      color: #22c55e;
-    }
-
-    .dw-status-unmodified {
-      color: #9aa0a6;
+      color: #ea580c;
     }
 
     .dw-snippet-row-actions {

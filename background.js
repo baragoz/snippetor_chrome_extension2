@@ -110,6 +110,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           console.log("DEBUG UPDATE NOTEs DONE");
           chrome.storage.sync.set({ [activeNoteUid]: newActiveNote }, () => {
             console.log("DEBUG UPDATE ACTIVE NOTE DONE");
+            markSnippetModified(activeSnippetId);
             sendResponse({
               success: true,
               note: message.note,
@@ -181,6 +182,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       // Save the updated notes back to storage
       chrome.storage.sync.set({ [notesUid]: notes }, () => {
+        markSnippetModified(snippetId);
         sendResponse({ success: true, note: resultNote, snippetId: snippetId });
         //
         // Notify all tabs with given URL
@@ -235,6 +237,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         //
         // Note removed, now return result and then update all affected tabs
         //
+        markSnippetModified(snippetId);
         sendResponse({ success: true });
         //
         // Notify all tabs with given URL
@@ -703,6 +706,27 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
+
+//
+// Flips source.isModified to true for a loaded (draft/space) snippet the
+// first time its notes are touched in the extension -- see
+// Readme.snippet-source.md. No-op for snippets with no `source` (shouldn't
+// happen) or already marked modified, so this is safe to call on every note
+// mutation without extra bookkeeping at the call sites.
+//
+function markSnippetModified(snippetId) {
+  chrome.storage.sync.get({ snippets: [] }, (data) => {
+    const index = data.snippets.findIndex((s) => s.id === snippetId);
+    if (index === -1) return;
+
+    const snippet = data.snippets[index];
+    if (!snippet.source || snippet.source.isModified) return;
+
+    const updatedSnippets = [...data.snippets];
+    updatedSnippets[index] = { ...snippet, source: { ...snippet.source, isModified: true } };
+    chrome.storage.sync.set({ snippets: updatedSnippets });
+  });
+}
 
 // Function to sanitize URLs
 // Keeps origin and pathname, removes query params and fragments

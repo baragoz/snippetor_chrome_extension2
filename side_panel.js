@@ -1,5 +1,74 @@
 // script.js
 
+//
+// Single place for every inline SVG icon used by the side panel UI --
+// previously scattered across three separate `this.icons = {...}` object
+// literals (SnippetsListView, NotesView) plus the standalone
+// icons/status/*.svg files. Kept as one class (rather than a plain object)
+// so it has room for a lookup method, not just property access.
+//
+// Note: content.js (the GitHub/Chromium Code Search note editor) runs as a
+// separate content script injected into third-party pages, not into
+// side_panel.html, so it can't reach this class without its own <script>
+// wiring -- its handful of icons stay where they are for now.
+//
+class SvgIconsFactory {
+  constructor() {
+    this.icons = {
+      // Snippet list row actions (SnippetsListView)
+      open: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z"/></svg>`,
+      trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>`,
+      close: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="m336-280-56-56 144-144-144-144 56-56 144 144 144-144 56 56-144 144 144 144-56 56-144-144-144 144Z"/></svg>`,
+
+      // Note editor actions (NotesView)
+      editIcon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29ZM560-120q74 0 137-37t63-103q0-36-19-62t-51-45l-59 59q23 10 36 22t13 26q0 23-36.5 41.5T560-200q-17 0-28.5 11.5T520-160q0 17 11.5 28.5T560-120ZM183-426l60-60q-20-8-31.5-16.5T200-520q0-12 18-24t76-37q88-38 117-69t29-70q0-55-44-87.5T280-840q-45 0-80.5 16T145-785q-11 13-9 29t15 26q13 11 29 9t27-13q14-14 31-20t42-6q41 0 60.5 12t19.5 28q0 14-17.5 25.5T262-654q-80 35-111 63.5T120-520q0 32 17 54.5t46 39.5Z"/></svg>`,
+      cancelIcon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`,
+      doneIcon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>`,
+      arrowDownIcon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"/></svg>`,
+      arrowUpIcon: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg>`,
+      dotIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#bbb"/></svg>`,
+      branchIcon: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.492 2.492 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"/></svg>`,
+
+      // Snippet source/status badges (deriveSnippetStatus) -- previously
+      // icons/status/*.svg, inlined here; still mirrored as files for the
+      // website at react_snippet_framework/public/assets/img/, see
+      // Readme.snippet-source.md.
+      statusNew: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><svg x="6" y="12" width="28" height="28" viewBox="0 -960 960 960"><path fill="#4b5563" d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg><rect x="21" y="0" width="27" height="17" rx="4" fill="#fff"/><svg x="22" y="1" width="25" height="15" viewBox="0 -960 960 960"><path fill="#7c3aed" d="M120-160q-33 0-56.5-23.5T40-240v-480q0-33 23.5-56.5T120-800h720q33 0 56.5 23.5T920-720v480q0 33-23.5 56.5T840-160H120Zm0-80h720v-480H120v480Zm20-120h50v-140l102 140h48v-240h-50v140L190-600h-50v240Zm240 0h160v-50H440v-44h100v-50H440v-46h100v-50H380v240Zm240 0h160q17 0 28.5-11.5T820-400v-200h-50v180h-44v-140h-50v140h-46v-180h-50v200q0 17 11.5 28.5T620-360ZM120-240v-480 480Z"/></svg></svg>`,
+      statusDraftSaved: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><svg x="6" y="12" width="28" height="28" viewBox="0 -960 960 960"><path fill="#4b5563" d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg><circle cx="36" cy="36" r="11" fill="#fff"/><circle cx="36" cy="36" r="9" fill="#22c55e"/><svg x="27" y="27" width="18" height="18" viewBox="0 -960 960 960"><path fill="#fff" d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Z"/></svg></svg>`,
+      statusDraftModified: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><svg x="6" y="12" width="28" height="28" viewBox="0 -960 960 960"><path fill="#4b5563" d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T720-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg><circle cx="36" cy="36" r="11" fill="#fff"/><circle cx="36" cy="36" r="9" fill="#f97316"/><svg x="28" y="28" width="16" height="16" viewBox="0 -960 960 960"><path fill="#fff" d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></svg>`,
+      statusSpaceSaved: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><svg x="3" y="13" width="30" height="30" viewBox="0 -960 960 960"><path fill="#4b5563" d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H260Zm0-80h480q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41Zm220-240Z"/></svg><circle cx="36" cy="36" r="11" fill="#fff"/><circle cx="36" cy="36" r="9" fill="#22c55e"/><svg x="27" y="27" width="18" height="18" viewBox="0 -960 960 960"><path fill="#fff" d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Z"/></svg></svg>`,
+      statusSpaceModified: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><svg x="3" y="13" width="30" height="30" viewBox="0 -960 960 960"><path fill="#4b5563" d="M260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H260Zm0-80h480q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41Zm220-240Z"/></svg><circle cx="36" cy="36" r="11" fill="#fff"/><circle cx="36" cy="36" r="9" fill="#f97316"/><svg x="28" y="28" width="16" height="16" viewBox="0 -960 960 960"><path fill="#fff" d="M200-200h57l391-391-57-57-391 391v57Zm-80 80v-170l528-527q12-11 26.5-17t30.5-6q16 0 31 6t26 18l55 56q12 11 17.5 26t5.5 30q0 16-5.5 30.5T817-647L290-120H120Zm640-584-56-56 56 56Zm-141 85-28-29 57 57-29-28Z"/></svg></svg>`,
+    };
+  }
+
+  get(name) {
+    return this.icons[name] || "";
+  }
+}
+
+const svgIcons = new SvgIconsFactory();
+
+// Combined source + saved/modified status for a snippet -- see
+// Readme.snippet-source.md. `snippet.source` is set once -- at creation
+// (createNewSnippet, type "new") or load time (content_snippetor.js's
+// snippetAPI.loadSnippet, type "space", space "draft" or a real space name)
+// -- and `source.isModified` is an explicit flag flipped by
+// background.js's markSnippetModified on the first note edit after
+// loading, not derived from a note-count comparison.
+function deriveSnippetStatus(snippet) {
+  const source = snippet.source;
+  if (!source || source.type === "new") return "new";
+  const kind = source.space === "draft" ? "draft" : "space";
+  return `${kind}-${source.isModified ? "modified" : "saved"}`;
+}
+
+const SNIPPET_STATUS_META = {
+  "new": { icon: svgIcons.get("statusNew"), label: "New", cls: "dw-status-new" },
+  "draft-saved": { icon: svgIcons.get("statusDraftSaved"), label: "Draft · Saved", cls: "dw-status-saved" },
+  "draft-modified": { icon: svgIcons.get("statusDraftModified"), label: "Draft · Modified", cls: "dw-status-modified" },
+  "space-saved": { icon: svgIcons.get("statusSpaceSaved"), label: "Space · Saved", cls: "dw-status-saved" },
+  "space-modified": { icon: svgIcons.get("statusSpaceModified"), label: "Space · Modified", cls: "dw-status-modified" },
+};
 
 class TabsDataProvider {
 
@@ -95,6 +164,7 @@ class TabsDataProvider {
       state: "new",
       title: `Snippet ${id}`,
       activeNote: -1,
+      source: { type: "new", space: "", version: 0, snippetUID: "", isModified: true },
     };
 
     chrome.storage.sync.get({ snippets: [] }, (data) => {
@@ -963,20 +1033,7 @@ class NotesView {
     this.container = snippetContainer.querySelector("#dw-note-list");
     this.snippetDataProvider = snippetDataProvider;
     this.notes = [];
-    this.icons = {
-      // Edit note
-      editIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29ZM560-120q74 0 137-37t63-103q0-36-19-62t-51-45l-59 59q23 10 36 22t13 26q0 23-36.5 41.5T560-200q-17 0-28.5 11.5T520-160q0 17 11.5 28.5T560-120ZM183-426l60-60q-20-8-31.5-16.5T200-520q0-12 18-24t76-37q88-38 117-69t29-70q0-55-44-87.5T280-840q-45 0-80.5 16T145-785q-11 13-9 29t15 26q13 11 29 9t27-13q14-14 31-20t42-6q41 0 60.5 12t19.5 28q0 14-17.5 25.5T262-654q-80 35-111 63.5T120-520q0 32 17 54.5t46 39.5Z"/></svg>',
-      cancelIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-      doneIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-      // Collapse note
-      arrowDownIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"/></svg>',
-      arrowUpIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg>',
-      // Remove note
-      closeIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="currentColor"><path d="m336-280-56-56 144-144-144-144 56-56 144 144 144-144 56 56-144 144 144 144-56 56-144-144-144 144Z"/></svg>',
-      // Subheader: tab-open status + branch
-      dotIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5" fill="#bbb"/></svg>',
-      branchIcon: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor"><path fill-rule="evenodd" d="M9.5 3.25a2.25 2.25 0 1 1 3 2.122V6A2.5 2.5 0 0 1 10 8.5H6a1 1 0 0 0-1 1v1.128a2.251 2.251 0 1 1-1.5 0V5.372a2.25 2.25 0 1 1 1.5 0v1.836A2.492 2.492 0 0 1 6 7h4a1 1 0 0 0 1-1v-.628A2.25 2.25 0 0 1 9.5 3.25Zm-6 0a.75.75 0 1 0 1.5 0 .75.75 0 0 0-1.5 0Zm8.25-.75a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5ZM4.25 12a.75.75 0 1 0 0 1.5.75.75 0 0 0 0-1.5Z"/></svg>',
-    };
+    this.icons = svgIcons.icons;
     // Cycled per note position, purely a visual grouping aid (left border color)
     this.colorPalette = ["#3b82f6", "#8b5cf6", "#22c55e", "#f97316", "#ef4444"];
   }
@@ -997,7 +1054,7 @@ class NotesView {
                 <div class="dw-note-header">
                     <div class="dw-note-filename" title="${note.url}">${this.getFileName(note.url)} <span class="dw-note-count">| ${this.getItemCount(note.text)}</span></div>
                     <div class="dw-note-collapse" title="Collapse/Expand">${this.icons.arrowDownIcon}</div>
-                    <span class="dw-close-icon" title="Remove note">${this.icons.closeIcon}</span>
+                    <span class="dw-close-icon" title="Remove note">${this.icons.close}</span>
                 </div>
                 <div class="dw-note-subheader">
                     <span class="dw-github-icon" title="Open in a tab">${this.icons.dotIcon}</span>
@@ -1175,9 +1232,6 @@ class SnippetsListDataProvider {
   constructor(observer) {
     this.observer = observer;
     this.snippets = [];
-    // snippetId -> number of notes, used to tell "Modified" (has notes)
-    // apart from "Unmodified" (created but nothing added yet)
-    this.noteCounts = {};
 
     // init storage data
     this.init();
@@ -1188,57 +1242,22 @@ class SnippetsListDataProvider {
       // update initial parametes
       this.snippets = data.snippets;
 
-      this.loadNoteCounts(() => {
-        // notify observer
-        this.observer.onDataReady();
+      // notify observer
+      this.observer.onDataReady();
 
-        // init data change listener
-        this.initListener();
-      });
+      // init data change listener
+      this.initListener();
     });
-  }
-
-  loadNoteCounts(callback) {
-    if (this.snippets.length === 0) {
-      this.noteCounts = {};
-      callback();
-      return;
-    }
-    const keys = {};
-    this.snippets.forEach((s) => { keys[`notes_${s.id}`] = []; });
-    chrome.storage.sync.get(keys, (data) => {
-      this.noteCounts = {};
-      this.snippets.forEach((s) => {
-        this.noteCounts[s.id] = (data[`notes_${s.id}`] || []).length;
-      });
-      callback();
-    });
-  }
-
-  getNoteCount(snippetId) {
-    return this.noteCounts[snippetId] || 0;
   }
 
   initListener() {
-    // Listen for changes in chrome.storage.sync
+    // Listen for changes in chrome.storage.sync -- each snippet carries its
+    // own status (source.isModified, see deriveSnippetStatus), so a
+    // "snippets" change is the only thing this view needs to react to.
     chrome.storage.onChanged.addListener((changes, areaName) => {
-      if (areaName === 'sync') {
-        let noteCountIds = this.snippets.map((s) => s.id);
-        let touchedCounts = false;
-        for (let key in changes) {
-          if (key === 'snippets') {
-            this.snippets = changes[key].newValue;
-            this.loadNoteCounts(() => this.observer.onStateChange());
-            return;
-          }
-          // notes_<id> for one of the snippets we're showing: refresh its count
-          if (noteCountIds.some((id) => key === `notes_${id}`)) {
-            touchedCounts = true;
-          }
-        }
-        if (touchedCounts) {
-          this.loadNoteCounts(() => this.observer.onStateChange());
-        }
+      if (areaName === 'sync' && changes.snippets) {
+        this.snippets = changes.snippets.newValue;
+        this.observer.onStateChange();
       }
     });
   }
@@ -1263,23 +1282,7 @@ class SnippetsListView {
     // API to create a new snippet or open selected snippet in an active tab
     //
     this.tabsManager = tabsManager;
-
-    this.icons = {
-      file: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M320-240h320v-80H320v80Zm0-160h320v-80H320v80ZM240-80q-33 0-56.5-23.5T160-160v-640q0-33 23.5-56.5T240-880h320l240 240v480q0 33-23.5 56.5T760-80H240Zm280-520v-200H240v640h480v-440H520ZM240-800v200-200 640-640Z"/></svg>`,
-      dot: `<svg class="dw-status-dot" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>`,
-      open: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M440-280H280q-83 0-141.5-58.5T80-480q0-83 58.5-141.5T280-680h160v80H280q-50 0-85 35t-35 85q0 50 35 85t85 35h160v80ZM320-440v-80h320v80H320Zm200 160v-80h160q50 0 85-35t35-85q0-50-35-85t-85-35H520v-80h160q83 0 141.5 58.5T880-480q0 83-58.5 141.5T680-280H520Z"/></svg>`,
-      trash: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M280-120q-33 0-56.5-23.5T200-200v-520h-40v-80h200v-40h240v40h200v80h-40v520q0 33-23.5 56.5T680-120H280Zm400-600H280v520h400v-520ZM360-280h80v-360h-80v360Zm160 0h80v-360h-80v360ZM280-720v520-520Z"/></svg>`,
-      close: `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m336-280-56-56 144-144-144-144 56-56 144 144 144-144 56 56-144 144 144 144-56 56-144-144-144 144Z"/></svg>`,
-    };
-
-    // Cycled per row, purely a visual grouping aid (same idea as the note-color palette)
-    this.colorPalette = [
-      { bg: "#e3edff", fg: "#2f6fed" },
-      { bg: "#f3e8ff", fg: "#8b5cf6" },
-      { bg: "#e7f6ec", fg: "#22c55e" },
-      { bg: "#fff1e0", fg: "#f97316" },
-      { bg: "#fde8e8", fg: "#ef4444" },
-    ];
+    this.icons = svgIcons.icons;
 
     this.dataProvider = new SnippetsListDataProvider(this);
 
@@ -1338,24 +1341,19 @@ class SnippetsListView {
     // Erase the previous state
     this.listElement.innerHTML = "";
     // Add new element
-    snippets.forEach((snippet, index) => {
-      const noteCount = this.dataProvider.getNoteCount(snippet.id);
-      const status = snippet.state === "new"
-        ? { cls: "dw-status-new", label: "New" }
-        : noteCount > 0
-          ? { cls: "dw-status-modified", label: "Modified" }
-          : { cls: "dw-status-unmodified", label: "Unmodified" };
-      const color = this.colorPalette[index % this.colorPalette.length];
-      const removeIsDestructive = status.cls !== "dw-status-unmodified";
+    snippets.forEach((snippet) => {
+      const statusKey = deriveSnippetStatus(snippet);
+      const status = SNIPPET_STATUS_META[statusKey];
+      const removeIsDestructive = statusKey !== "new";
 
       const snippetElement = document.createElement("div");
       snippetElement.className = "dw-snippet-row";
       snippetElement.dataset.id = snippet.id;
       snippetElement.innerHTML = `
-        <div class="dw-snippet-row-icon" style="background-color:${color.bg};color:${color.fg}">${this.icons.file}</div>
+        <div class="dw-snippet-row-icon" title="${status.label}">${status.icon}</div>
         <div class="dw-snippet-row-info">
           <div class="dw-snippet-row-title">${snippet.title}</div>
-          <div class="dw-snippet-row-status ${status.cls}">${this.icons.dot}<span>${status.label}</span></div>
+          <div class="dw-snippet-row-status ${status.cls}">${status.label}</div>
         </div>
         <div class="dw-snippet-row-actions">
           <button class="dw-snippet-action-btn dw-snippet-open-btn" title="Open snippet">${this.icons.open}</button>
@@ -1417,20 +1415,6 @@ class SnippetManager {
     // States:
     // this.stateDefault = "snippets";  // could be snippets/active
     // this.statePinned = "default";  // could be pinned/default
-    /*
-          this.icons = {
-              // snippet state
-              new: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M280-160v-441q0-33 24-56t57-23h439q33 0 56.5 23.5T880-600v320L680-80H360q-33 0-56.5-23.5T280-160ZM81-710q-6-33 13-59.5t52-32.5l434-77q33-6 59.5 13t32.5 52l10 54h-82l-7-40-433 77 40 226v279q-16-9-27.5-24T158-276L81-710Zm279 110v440h280l160-160v-280H360Zm220 220Zm-40 160h80v-120h120v-80H620v-120h-80v120H420v80h120v120Z"/></svg>`,
-              play: `<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M320-200v-560l440 280-440 280Zm80-280Zm0 134 210-134-210-134v268Z"/></svg>`,
-              // Edit note
-              editIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M160-120v-170l527-526q12-12 27-18t30-6q16 0 30.5 6t25.5 18l56 56q12 11 18 25.5t6 30.5q0 15-6 30t-18 27L330-120H160Zm80-80h56l393-392-28-29-29-28-392 393v56Zm560-503-57-57 57 57Zm-139 82-29-28 57 57-28-29ZM560-120q74 0 137-37t63-103q0-36-19-62t-51-45l-59 59q23 10 36 22t13 26q0 23-36.5 41.5T560-200q-17 0-28.5 11.5T520-160q0 17 11.5 28.5T560-120ZM183-426l60-60q-20-8-31.5-16.5T200-520q0-12 18-24t76-37q88-38 117-69t29-70q0-55-44-87.5T280-840q-45 0-80.5 16T145-785q-11 13-9 29t15 26q13 11 29 9t27-13q14-14 31-20t42-6q41 0 60.5 12t19.5 28q0 14-17.5 25.5T262-654q-80 35-111 63.5T120-520q0 32 17 54.5t46 39.5Z"/></svg>',
-              cancelIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m336-280 144-144 144 144 56-56-144-144 144-144-56-56-144 144-144-144-56 56 144 144-144 144 56 56ZM480-80q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-              doneIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#fefefe"><path d="m424-296 282-282-56-56-226 226-114-114-56 56 170 170Zm56 216q-83 0-156-31.5T197-197q-54-54-85.5-127T80-480q0-83 31.5-156T197-763q54-54 127-85.5T480-880q83 0 156 31.5T763-763q54 54 85.5 127T880-480q0 83-31.5 156T763-197q-54 54-127 85.5T480-80Zm0-80q134 0 227-93t93-227q0-134-93-227t-227-93q-134 0-227 93t-93 227q0 134 93 227t227 93Zm0-320Z"/></svg>',
-              // Collapse note
-              arrowDownIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-344 240-584l56-56 184 184 184-184 56 56-240 240Z"/></svg>',
-              arrowUpIcon: '<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#5f6368"><path d="M480-528 296-344l-56-56 240-240 240 240-56 56-184-184Z"/></svg>',
-          };
-    */
     // create tabs manager
     this.tabsManager = new TabsManager(this);
     this.snippetsView = new SnippetsListView("dw-snippet-list", this.tabsManager);
